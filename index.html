@@ -18,25 +18,52 @@
     </header>
 
     <section class="hero-grid">
-      <article class="card index-card">
-        <div class="index-head">
-          <div><span class="label">ÍNDICE GLOBAL</span><div class="score-line"><strong id="globalScore">--</strong><span>/100</span></div></div>
-          <div class="state-pill" id="globalState">—</div>
-        </div>
-        <div class="meter-line">
-          <div class="meter-track"><div class="meter-fill" id="gaugeFill"></div></div>
-          <div class="meter-scale"><span>Crítico</span><span>Escasez</span><span>Normal</span><span>Abundancia</span><span>Saturado</span></div>
-        </div>
-        <dl class="props">
-          <div class="prop"><dt>Litros reportados</dt><dd id="totalLiters">—</dd></div>
-          <div class="prop"><dt>Surtidores con saldo</dt><dd id="availableStations">—</dd></div>
-          <div class="prop"><dt>Total conocidos</dt><dd id="totalStations">—</dd></div>
-        </dl>
-      </article>
+      <div class="hero-left">
+        <article class="card gauge-card">
+          <span class="label">ÍNDICE GLOBAL</span>
+          <div class="gauge-wrap">
+            <svg class="gauge" id="gaugeSvg" viewBox="0 0 200 112" aria-label="Medidor del índice global"></svg>
+            <div class="gauge-value">
+              <strong id="globalScore">--</strong>
+              <span id="globalState">—</span>
+            </div>
+          </div>
+          <dl class="props gauge-stats">
+            <div class="prop"><dt>Litros reportados</dt><dd id="totalLiters">—</dd></div>
+            <div class="prop"><dt>Surtidores con saldo</dt><dd id="availableStations">—</dd></div>
+            <div class="prop"><dt>Total conocidos</dt><dd id="totalStations">—</dd></div>
+          </dl>
+        </article>
+
+        <article class="card hist-card">
+          <span class="label">VALORES HISTÓRICOS</span>
+          <dl class="props">
+            <div class="prop"><dt>Ayer</dt><dd><span class="value-pill" id="histYesterday">—</span></dd></div>
+            <div class="prop"><dt>Última semana</dt><dd><span class="value-pill" id="histWeek">—</span></dd></div>
+            <div class="prop"><dt>Último mes</dt><dd><span class="value-pill" id="histMonth">—</span></dd></div>
+          </dl>
+        </article>
+
+        <article class="card range-card">
+          <span class="label">MÁXIMO Y MÍNIMO REGISTRADOS</span>
+          <dl class="props">
+            <div class="prop"><dt>Máximo <span class="prop-date" id="histHighDate"></span></dt><dd><span class="value-pill" id="histHigh">—</span></dd></div>
+            <div class="prop"><dt>Mínimo <span class="prop-date" id="histLowDate"></span></dt><dd><span class="value-pill" id="histLow">—</span></dd></div>
+          </dl>
+        </article>
+      </div>
 
       <article class="card trend-card">
-        <div class="card-title-row"><div><span class="label">ÚLTIMAS 24 HORAS</span><h2>Evolución del índice</h2></div><span class="mini-badge" id="trendDelta">—</span></div>
+        <div class="card-title-row">
+          <div><span class="label">EVOLUCIÓN</span><h2>Gráfico del índice <span class="mini-badge" id="trendDelta">—</span></h2></div>
+          <div class="chart-ranges" id="chartRangeButtons">
+            <button class="filter active" data-range="7d" type="button">7d</button>
+            <button class="filter" data-range="30d" type="button">30d</button>
+            <button class="filter" data-range="all" type="button">Todo</button>
+          </div>
+        </div>
         <div class="chart-wrap"><svg id="trendChart" viewBox="0 0 600 220" preserveAspectRatio="none" aria-label="Evolución del índice"></svg></div>
+        <div class="chart-detail" id="trendChartDetail">Toca el gráfico para ver el detalle de un momento.</div>
       </article>
     </section>
 
