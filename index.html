@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0d10" />
+  <title>Gasolina Index · Santa Cruz</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div><p class="eyebrow">SANTA CRUZ · BOLIVIA</p><h1>Gasolina Index</h1><p class="subtitle">Disponibilidad de gasolina en tiempo casi real</p></div>
+      <div class="updated"><span class="dot" id="liveDot"></span><span id="updatedAt">Cargando…</span></div>
+    </header>
+
+    <section class="hero-grid">
+      <article class="card index-card">
+        <div class="index-head">
+          <div><span class="label">ÍNDICE GLOBAL</span><div class="score-line"><strong id="globalScore">--</strong><span>/100</span></div></div>
+          <div class="state-pill" id="globalState">—</div>
+        </div>
+        <div class="gauge">
+          <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div><div class="gauge-marker" id="gaugeMarker"></div></div>
+          <div class="gauge-labels"><span>Crítico</span><span>Escasez</span><span>Normal</span><span>Abundancia</span><span>Saturado</span></div>
+        </div>
+        <div class="summary-row">
+          <div><span>Litros reportados</span><strong id="totalLiters">—</strong></div>
+          <div><span>Surtidores con saldo</span><strong id="availableStations">—</strong></div>
+          <div><span>Total conocidos</span><strong id="totalStations">—</strong></div>
+        </div>
+      </article>
+
+      <article class="card trend-card">
+        <div class="card-title-row"><div><span class="label">ÚLTIMAS 24 HORAS</span><h2>Evolución del índice</h2></div><span class="mini-badge" id="trendDelta">—</span></div>
+        <div class="chart-wrap"><svg id="trendChart" viewBox="0 0 600 220" preserveAspectRatio="none" aria-label="Evolución del índice"></svg></div>
+      </article>
+    </section>
+
+    <section class="section-head">
+      <div><span class="label">SURTIDORES</span><h2>Disponibilidad por estación</h2></div>
+      <div class="filters"><button class="filter active" data-filter="all">Todos</button><button class="filter" data-filter="available">Con saldo</button><button class="filter" data-filter="critical">Sin saldo</button></div>
+    </section>
+
+    <section class="stations-grid" id="stationsGrid"></section>
+    <footer>Datos obtenidos automáticamente desde BioCloud. Este sitio no representa a YPFB ni garantiza disponibilidad al momento de llegada.</footer>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
