@@ -1,0 +1,1233 @@
+{
+  "name": "Gasolina Fear & Greed - GitHub Pages (nodos GitHub nativos)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "75c4e3a3-7ede-45d7-913c-7a1b25bb24e8",
+      "name": "Cada 30 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2096,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "487ba9c4-d3c9-4522-8a09-a6749cda9549",
+              "name": "owner",
+              "value": "Cordelia242",
+              "type": "string"
+            },
+            {
+              "id": "16f60c35-a484-4336-b6ef-9c7c97e473a5",
+              "name": "repo",
+              "value": "gasolina-fear-greed-web",
+              "type": "string"
+            },
+            {
+              "id": "8df1936f-415a-4c27-9aca-ba1e2f5453a2",
+              "name": "branch",
+              "value": "main",
+              "type": "string"
+            },
+            {
+              "id": "caf805fe-695a-4288-904b-23c09a357fc7",
+              "name": "dataRoot",
+              "value": "public/data",
+              "type": "string"
+            },
+            {
+              "id": "4c807e8c-7cc1-428c-a3f2-d1dd130daac9",
+              "name": "timezone",
+              "value": "America/La_Paz",
+              "type": "string"
+            },
+            {
+              "id": "ddd8ce4a-6b1c-4207-b0fe-c20c4b85fce7",
+              "name": "sourceUrl",
+              "value": "https://app9.biocloud.info/saldos/main/donde/134",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "78aa2f70-77e0-4469-af4b-ef546a29f1d6",
+      "name": "Configuracion",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1872,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Configuracion').first().json.sourceUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "id": "dc6d3bd0-bbf9-4e44-a587-39683121db8a",
+      "name": "Descargar saldos BioCloud",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1648,
+        224
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nlet html = '';\n\nif (typeof input === 'string') {\n  html = input;\n} else {\n  const candidates = [input.body, input.data, input.response, input.html, ...Object.values(input)];\n  html = candidates.find(v => typeof v === 'string' && v.includes('Volumen disponible')) || '';\n}\n\nif (!html || !html.includes('Volumen disponible')) {\n  throw new Error('La respuesta de BioCloud no contiene \"Volumen disponible\". Se cancela para no publicar datos incorrectos.');\n}\n\nfunction decodeEntities(str) {\n  const map = {\n    '&nbsp;': ' ', '&amp;': '&', '&quot;': '\"', '&#39;': \"'\",\n    '&apos;': \"'\", '&lt;': '<', '&gt;': '>'\n  };\n  return str\n    .replace(/&(?:nbsp|amp|quot|#39|apos|lt|gt);/g, m => map[m] || m)\n    .replace(/&#(\\d+);/g, (_, n) => String.fromCharCode(Number(n)));\n}\n\nconst text = decodeEntities(\n  html\n    .replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi, '\\n')\n    .replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style>/gi, '\\n')\n    .replace(/<!--[\\s\\S]*?-->/g, '\\n')\n    .replace(/<br\\s*\\/?>/gi, '\\n')\n    .replace(/<\\/(?:div|p|h[1-6]|li|section|article|tr|td)>/gi, '\\n')\n    .replace(/<[^>]+>/g, ' ')\n).replace(/\\r/g, '\\n');\n\nconst lines = text\n  .split('\\n')\n  .map(s => s.replace(/\\s+/g, ' ').trim())\n  .filter(Boolean);\n\nconst measuredText = lines.find(l => /Última medición/i.test(l)) || '';\nconst measuredMatch = measuredText.match(/(\\d{4}-\\d{2}-\\d{2})\\s+(\\d{1,2}:\\d{2})/);\nconst sourceMeasuredAt = measuredMatch ? `${measuredMatch[1]}T${measuredMatch[2]}:00` : null;\n\nfunction intFrom(line) {\n  const m = String(line || '').match(/([\\d.,]+)/);\n  if (!m) return null;\n  return Number(m[1].replace(/[.,]/g, ''));\n}\n\nfunction stationKey(name) {\n  return name\n    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '-')\n    .replace(/^-|-$/g, '');\n}\n\nconst stations = [];\n\nfor (let i = 0; i < lines.length; i++) {\n  if (!/^Volumen disponible$/i.test(lines[i])) continue;\n\n  const name = lines[i - 1];\n  const volume = intFrom(lines[i + 1]);\n  if (!name || !Number.isFinite(volume)) continue;\n\n  let vehicles = null;\n  let queueMinutes = null;\n  let address = null;\n\n  for (let j = i + 2; j < Math.min(lines.length, i + 16); j++) {\n    const line = lines[j];\n\n    if (/^El volumen alcanza aprox\\.? para$/i.test(line)) {\n      vehicles = intFrom(lines[j + 1]);\n      continue;\n    }\n    if (/^Un vehículo en cola avanza cada$/i.test(line)) {\n      queueMinutes = intFrom(lines[j + 1]);\n      continue;\n    }\n    if (/^UBICACION$/i.test(line) && j > 0) {\n      address = lines[j - 1];\n      break;\n    }\n    if (/^Volumen disponible$/i.test(line)) break;\n  }\n\n  stations.push({\n    key: stationKey(name),\n    name,\n    address,\n    liters: volume,\n    vehiclesEstimated: vehicles,\n    queueMinutes\n  });\n}\n\nif (stations.length < 1) {\n  throw new Error('No se extrajo ningún surtidor. Se cancela la publicación.');\n}\n\nreturn [{\n  json: {\n    sourceMeasuredAt,\n    visibleStationCount: stations.length,\n    stations\n  }\n}];"
+      },
+      "id": "fd994dde-eb61-46b6-b3aa-fd6668a5fc09",
+      "name": "Extraer surtidores visibles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Configuracion').first().json;\nconst parts = new Intl.DateTimeFormat('en-CA', {\n  timeZone: cfg.timezone,\n  year: 'numeric',\n  month: '2-digit',\n  day: '2-digit'\n}).formatToParts(new Date());\nconst p = Object.fromEntries(parts.map(x => [x.type, x.value]));\nreturn [{ json: { localDate: `${p.year}-${p.month}-${p.day}` } }];"
+      },
+      "id": "7a5125f8-0ca4-4300-9bcd-09ac19abf36a",
+      "name": "Fecha local",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1216,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Configuracion').first().json.dataRoot + '/catalog.json' }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {
+          "reference": "={{ $('Configuracion').first().json.branch }}"
+        }
+      },
+      "id": "6f13bd27-73b6-4acd-9630-4c36ad9e796a",
+      "name": "GitHub - Leer catalog.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -992,
+        224
+      ],
+      "webhookId": "0ee88e31-9f23-4ea6-a12d-42e08a01c29b",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Configuracion').first().json.dataRoot + '/stats.json' }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {
+          "reference": "={{ $('Configuracion').first().json.branch }}"
+        }
+      },
+      "id": "b6156a6c-bfb5-458c-a8e9-e65594c2ede1",
+      "name": "GitHub - Leer stats.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -752,
+        224
+      ],
+      "webhookId": "88cc23cb-b927-4bd3-99f0-07c916e7e899",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Configuracion').first().json.dataRoot + '/history/' + $('Fecha local').first().json.localDate + '.json' }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {
+          "reference": "={{ $('Configuracion').first().json.branch }}"
+        }
+      },
+      "id": "6fcbdc35-9838-4428-987c-e131d11c31ad",
+      "name": "GitHub - Leer historico diario",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -528,
+        224
+      ],
+      "webhookId": "9db113e9-98a6-4dc4-9cc4-fd88ea729a27",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Configuracion').first().json.dataRoot + '/latest.json' }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {
+          "reference": "={{ $('Configuracion').first().json.branch }}"
+        }
+      },
+      "id": "64bb29d7-c0a5-44dd-ba2c-f0ce556280b3",
+      "name": "GitHub - Leer latest.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        224
+      ],
+      "webhookId": "6319024d-60e1-4ad0-9345-896ab8b7d7fa",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Configuracion').first().json.dataRoot + '/saldos-history.json' }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {
+          "reference": "={{ $('Configuracion').first().json.branch }}"
+        }
+      },
+      "id": "a1d6d366-6f0a-4e00-9ccd-51ae1521f526",
+      "name": "GitHub - Leer saldos-history.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        400
+      ],
+      "webhookId": "a56394db-a009-410b-b239-a2ca197de803",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Configuracion').first().json;\nconst parsed = $('Extraer surtidores visibles').first().json;\nconst localDate = $('Fecha local').first().json.localDate;\n\nfunction readGithubJson(nodeName, fallback) {\n  const response = $(nodeName).first().json;\n\n  // With \"As Binary Property\" disabled, GitHub File:Get returns the raw\n  // Contents API response, whose content field is base64.\n  if (!response || !response.content) {\n    return { exists: false, value: JSON.parse(JSON.stringify(fallback)) };\n  }\n\n  try {\n    const raw = Buffer\n      .from(String(response.content).replace(/\\n/g, ''), 'base64')\n      .toString('utf8');\n\n    return { exists: true, value: JSON.parse(raw) };\n  } catch (e) {\n    throw new Error(`No se pudo interpretar ${nodeName}: ${e.message}`);\n  }\n}\n\nfunction stateFor(score) {\n  if (score <= 20) return 'CRITICO';\n  if (score <= 40) return 'ESCASEZ';\n  if (score <= 60) return 'NORMAL';\n  if (score <= 80) return 'ABUNDANCIA';\n  return 'SATURADO';\n}\n\n// Catálogo inicial conocido. Si BioCloud oculta una estación por no tener\n// saldo, seguirá apareciendo en nuestros snapshots con 0 L.\nconst seedCatalog = [\n  { key: 'alemana', name: 'ALEMANA' },\n  { key: 'beni', name: 'BENI' },\n  { key: 'berea', name: 'BEREA' },\n  { key: 'cedeno', name: 'CEDENO' },\n  { key: 'chaco', name: 'CHACO' },\n  { key: 'gasco', name: 'GASCO' },\n  { key: 'la-teca', name: 'LA TECA' },\n  { key: 'lopez', name: 'LOPEZ' },\n  { key: 'montecristo', name: 'MONTECRISTO' },\n  { key: 'paragua', name: 'PARAGUA' },\n  { key: 'parapeti', name: 'PARAPETI' },\n  { key: 'royal', name: 'ROYAL' },\n  { key: 'sur-central', name: 'SUR CENTRAL' },\n  { key: 'viru-viru', name: 'VIRU VIRU' }\n];\n\nconst catalogFile = readGithubJson('GitHub - Leer catalog.json', { stations: seedCatalog });\nconst statsFile = readGithubJson('GitHub - Leer stats.json', { version: 1, stations: {} });\nconst historyFile = readGithubJson(\n  'GitHub - Leer historico diario',\n  { date: localDate, snapshots: [] }\n);\nconst latestFile = readGithubJson('GitHub - Leer latest.json', null);\nconst saldosFile = readGithubJson('GitHub - Leer saldos-history.json', { records: [] });\n\nconst catalog = catalogFile.value || { stations: seedCatalog };\nconst stats = statsFile.value || { version: 1, stations: {} };\nconst history = historyFile.value || { date: localDate, snapshots: [] };\nconst saldosHistory = saldosFile.value || { records: [] };\n\ncatalog.stations = Array.isArray(catalog.stations) ? catalog.stations : [];\nstats.stations = stats.stations || {};\nhistory.date = localDate;\nhistory.snapshots = Array.isArray(history.snapshots) ? history.snapshots : [];\nsaldosHistory.records = Array.isArray(saldosHistory.records) ? saldosHistory.records : [];\n\nconst catalogByKey = new Map(seedCatalog.map(s => [s.key, { ...s }]));\n\nfor (const s of catalog.stations) {\n  if (s?.key) {\n    catalogByKey.set(s.key, { ...catalogByKey.get(s.key), ...s });\n  }\n}\n\nconst now = new Date().toISOString();\n\nfor (const s of parsed.stations) {\n  const previous = catalogByKey.get(s.key) || {};\n  catalogByKey.set(s.key, {\n    ...previous,\n    key: s.key,\n    name: s.name || previous.name || s.key,\n    address: s.address || previous.address || null,\n    lastSeenAt: now\n  });\n}\n\nconst visible = new Map(parsed.stations.map(s => [s.key, s]));\nconst stationResults = [];\n\nfor (const station of [...catalogByKey.values()].sort((a, b) => a.name.localeCompare(b.name))) {\n  const current = visible.get(station.key);\n\n  // BioCloud removes a station when it has no balance.\n  const liters = current ? current.liters : 0;\n\n  const prior = stats.stations[station.key] || {\n    count: 0,\n    mean: 0,\n    m2: 0\n  };\n\n  // Bootstrap absolute component: >= 25,000 L = 100.\n  const absoluteIndex = Math.max(0, Math.min(100, liters / 25000 * 100));\n\n  let historicalIndex = null;\n\n  // ~7 days at one sample every 30 minutes.\n  if (prior.count >= 336 && prior.count > 1) {\n    const variance = prior.m2 / prior.count;\n    const std = Math.sqrt(Math.max(0, variance));\n\n    if (std > 0) {\n      historicalIndex = Math.max(\n        0,\n        Math.min(100, 50 + 20 * ((liters - prior.mean) / std))\n      );\n    }\n  }\n\n  const score = historicalIndex === null\n    ? absoluteIndex\n    : absoluteIndex * 0.40 + historicalIndex * 0.60;\n\n  stationResults.push({\n    key: station.key,\n    name: station.name,\n    address: current?.address || station.address || null,\n    liters,\n    vehiclesEstimated: current ? current.vehiclesEstimated : 0,\n    queueMinutes: current ? current.queueMinutes : null,\n    visibleInSource: Boolean(current),\n    score: Math.round(score * 100) / 100,\n    state: stateFor(score),\n    absoluteIndex: Math.round(absoluteIndex * 100) / 100,\n    historicalIndex: historicalIndex === null\n      ? null\n      : Math.round(historicalIndex * 100) / 100,\n    historySamplesBefore: prior.count\n  });\n\n  // Welford: estadísticas incrementales sin tener que leer 30 días de JSON.\n  // Los 0 L por ausencia se incluyen intencionalmente.\n  const nextCount = prior.count + 1;\n  const delta = liters - prior.mean;\n  const nextMean = prior.mean + delta / nextCount;\n  const delta2 = liters - nextMean;\n\n  stats.stations[station.key] = {\n    count: nextCount,\n    mean: nextMean,\n    m2: prior.m2 + delta * delta2,\n    updatedAt: now\n  };\n}\n\nconst globalScore = stationResults.length\n  ? stationResults.reduce((sum, s) => sum + s.score, 0) / stationResults.length\n  : 0;\n\nconst snapshot = {\n  scrapedAt: now,\n  sourceMeasuredAt: parsed.sourceMeasuredAt,\n  global: {\n    score: Math.round(globalScore * 100) / 100,\n    state: stateFor(globalScore),\n    totalLiters: stationResults.reduce((sum, s) => sum + s.liters, 0),\n    stationsAvailable: stationResults.filter(s => s.liters > 0).length,\n    stationsTotal: stationResults.length\n  },\n  stations: stationResults\n};\n\n// Si una reejecución manual ve exactamente la misma medición, no duplicamos.\nconst last = history.snapshots[history.snapshots.length - 1];\nconst isNewSnapshot = !last ||\n  last.sourceMeasuredAt !== snapshot.sourceMeasuredAt ||\n  last.global?.totalLiters !== snapshot.global.totalLiters;\n\nif (isNewSnapshot) {\n  history.snapshots.push(snapshot);\n\n  // ponytail: registro plano sin paginar, se relee/reescribe entero cada 30 min.\n  // Si crece a varios MB, rotar por año (saldos-history-2027.json, etc).\n  for (const s of stationResults) {\n    saldosHistory.records.push({\n      scrapedAt: now,\n      sourceMeasuredAt: parsed.sourceMeasuredAt,\n      station: s.key,\n      name: s.name,\n      liters: s.liters,\n      vehiclesEstimated: s.vehiclesEstimated,\n      queueMinutes: s.queueMinutes,\n      visibleInSource: s.visibleInSource\n    });\n  }\n}\n\ncatalog.stations = [...catalogByKey.values()]\n  .sort((a, b) => a.name.localeCompare(b.name));\ncatalog.updatedAt = now;\nstats.updatedAt = now;\nsaldosHistory.updatedAt = now;\n\nconst pretty = value => JSON.stringify(value, null, 2) + '\\n';\n\nreturn [{\n  json: {\n    catalogExists: catalogFile.exists,\n    statsExists: statsFile.exists,\n    historyExists: historyFile.exists,\n    latestExists: latestFile.exists,\n    saldosExists: saldosFile.exists,\n\n    catalogPath: `${cfg.dataRoot}/catalog.json`,\n    statsPath: `${cfg.dataRoot}/stats.json`,\n    historyPath: `${cfg.dataRoot}/history/${localDate}.json`,\n    latestPath: `${cfg.dataRoot}/latest.json`,\n    saldosPath: `${cfg.dataRoot}/saldos-history.json`,\n\n    catalogContent: pretty(catalog),\n    statsContent: pretty(stats),\n    historyContent: pretty(history),\n    latestContent: pretty(snapshot),\n    saldosContent: pretty(saldosHistory),\n\n    snapshot\n  }\n}];"
+      },
+      "id": "f404b47c-dcd5-4d27-aaf0-7046e9b86760",
+      "name": "Construir datos e indices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "871b5883-4245-4946-abfd-4bab9d8cfe4f",
+              "leftValue": "={{ $('Construir datos e indices').first().json.catalogExists }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e17a4757-911a-4ea0-9ae5-0c83176170f7",
+      "name": "¿Existe catalog.json?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Construir datos e indices').first().json.catalogPath }}",
+        "fileContent": "={{ $('Construir datos e indices').first().json.catalogContent }}",
+        "commitMessage": "={{ 'data: actualizar ' + $('Construir datos e indices').first().json.catalogPath }}",
+        "additionalParameters": {
+          "branch": {
+            "branch": "={{ $('Configuracion').first().json.branch }}"
+          }
+        }
+      },
+      "id": "53f3e898-916e-4c0e-95b5-6abfba1aa02b",
+      "name": "GitHub - Editar catalog.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        128
+      ],
+      "webhookId": "961e886c-3152-4cba-9abf-8dfc261abdc4",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Construir datos e indices').first().json.catalogPath }}",
+        "fileContent": "={{ $('Construir datos e indices').first().json.catalogContent }}",
+        "commitMessage": "={{ 'data: actualizar ' + $('Construir datos e indices').first().json.catalogPath }}",
+        "additionalParameters": {
+          "branch": {
+            "branch": "={{ $('Configuracion').first().json.branch }}"
+          }
+        }
+      },
+      "id": "050169db-032f-47af-96a5-a196625d7bee",
+      "name": "GitHub - Crear catalog.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        320
+      ],
+      "webhookId": "6bbfaac2-a3ac-405d-85aa-55c5f12e6d4d",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9007c531-626d-4bcc-bac8-c8041851b527",
+              "leftValue": "={{ $('Construir datos e indices').first().json.statsExists }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "595ecb50-cec4-46d5-aa3d-73674dc0f639",
+      "name": "¿Existe stats.json?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Construir datos e indices').first().json.statsPath }}",
+        "fileContent": "={{ $('Construir datos e indices').first().json.statsContent }}",
+        "commitMessage": "={{ 'data: actualizar ' + $('Construir datos e indices').first().json.statsPath }}",
+        "additionalParameters": {
+          "branch": {
+            "branch": "={{ $('Configuracion').first().json.branch }}"
+          }
+        }
+      },
+      "id": "da921c96-afbc-485d-8483-998b770dc078",
+      "name": "GitHub - Editar stats.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        848,
+        128
+      ],
+      "webhookId": "2028752d-c06e-40b5-99a7-35678916e2ac",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Construir datos e indices').first().json.statsPath }}",
+        "binaryData": "={{ false }}",
+        "fileContent": "={{ $('Construir datos e indices').first().json.statsContent }}",
+        "commitMessage": "={{ 'data: actualizar ' + $('Construir datos e indices').first().json.statsPath }}",
+        "additionalParameters": {
+          "branch": {
+            "branch": "={{ $('Configuracion').first().json.branch }}"
+          }
+        }
+      },
+      "id": "3a6dd4aa-4b9b-4754-8697-370e915275fe",
+      "name": "GitHub - Crear stats.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        848,
+        320
+      ],
+      "webhookId": "3f3c0b38-5859-44bb-9db3-ce765ba5a84a",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b3883578-aa29-4244-aca8-54cb558e8701",
+              "leftValue": "={{ $('Construir datos e indices').first().json.historyExists }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a6849944-6c86-40a2-b60e-8b76976b5784",
+      "name": "¿Existe historico diario?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1056,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Construir datos e indices').first().json.historyPath }}",
+        "fileContent": "={{ $('Construir datos e indices').first().json.historyContent }}",
+        "commitMessage": "={{ 'data: actualizar ' + $('Construir datos e indices').first().json.historyPath }}",
+        "additionalParameters": {
+          "branch": {
+            "branch": "={{ $('Configuracion').first().json.branch }}"
+          }
+        }
+      },
+      "id": "eeba82d9-19aa-4f97-aebf-6add07341707",
+      "name": "GitHub - Editar historico diario",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1264,
+        128
+      ],
+      "webhookId": "5f73250f-c52f-4fbc-bc67-a1dde30126bd",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Construir datos e indices').first().json.historyPath }}",
+        "fileContent": "={{ $('Construir datos e indices').first().json.historyContent }}",
+        "commitMessage": "={{ 'data: actualizar ' + $('Construir datos e indices').first().json.historyPath }}",
+        "additionalParameters": {
+          "branch": {
+            "branch": "={{ $('Configuracion').first().json.branch }}"
+          }
+        }
+      },
+      "id": "ba061661-d137-4e12-a4d2-a34c05394e57",
+      "name": "GitHub - Crear historico diario",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1264,
+        320
+      ],
+      "webhookId": "b722bd73-7476-48c4-a21b-a1eb0cec7ba9",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1e7f2a81-4766-4ebd-a508-6894745915af",
+              "leftValue": "={{ $('Construir datos e indices').first().json.latestExists }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "83a49316-805b-4fba-bea4-8edefc8598fc",
+      "name": "¿Existe latest.json?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Construir datos e indices').first().json.latestPath }}",
+        "fileContent": "={{ $('Construir datos e indices').first().json.latestContent }}",
+        "commitMessage": "={{ 'data: actualizar ' + $('Construir datos e indices').first().json.latestPath }}",
+        "additionalParameters": {
+          "branch": {
+            "branch": "={{ $('Configuracion').first().json.branch }}"
+          }
+        }
+      },
+      "id": "f4879d8b-6723-43cd-b4f9-1b20f08486c1",
+      "name": "GitHub - Editar latest.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        128
+      ],
+      "webhookId": "615322b1-5160-4cb4-b3e5-54928cd068a8",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Construir datos e indices').first().json.latestPath }}",
+        "fileContent": "={{ $('Construir datos e indices').first().json.latestContent }}",
+        "commitMessage": "={{ 'data: actualizar ' + $('Construir datos e indices').first().json.latestPath }}",
+        "additionalParameters": {
+          "branch": {
+            "branch": "={{ $('Configuracion').first().json.branch }}"
+          }
+        }
+      },
+      "id": "6a383e87-505a-485c-8434-690f85bd16f9",
+      "name": "GitHub - Crear latest.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        320
+      ],
+      "webhookId": "c3b3ebf9-ccbd-4f54-ac94-64f71f342c7e",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b249bc4a-d03f-4364-b4f4-33f743cbb3ae",
+              "leftValue": "={{ $('Construir datos e indices').first().json.saldosExists }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1ce4b8c8-0809-4d57-b170-e915c070a825",
+      "name": "¿Existe saldos-history.json?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1904,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Construir datos e indices').first().json.saldosPath }}",
+        "fileContent": "={{ $('Construir datos e indices').first().json.saldosContent }}",
+        "commitMessage": "={{ 'data: actualizar ' + $('Construir datos e indices').first().json.saldosPath }}",
+        "additionalParameters": {
+          "branch": {
+            "branch": "={{ $('Configuracion').first().json.branch }}"
+          }
+        }
+      },
+      "id": "abc761d7-114a-46fd-a478-26d52a7e9220",
+      "name": "GitHub - Editar saldos-history.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        2112,
+        128
+      ],
+      "webhookId": "160b0a65-b8f0-427b-a0ba-0f0307dbb0e5",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('Configuracion').first().json.repo }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('Construir datos e indices').first().json.saldosPath }}",
+        "fileContent": "={{ $('Construir datos e indices').first().json.saldosContent }}",
+        "commitMessage": "={{ 'data: actualizar ' + $('Construir datos e indices').first().json.saldosPath }}",
+        "additionalParameters": {
+          "branch": {
+            "branch": "={{ $('Configuracion').first().json.branch }}"
+          }
+        }
+      },
+      "id": "72d0b2b6-c80f-49c2-bfbd-b5434bc0b702",
+      "name": "GitHub - Crear saldos-history.json",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        2112,
+        320
+      ],
+      "webhookId": "12465e53-be9e-4840-90c6-960aafa33a52",
+      "credentials": {
+        "githubApi": {
+          "id": "PJ1qxQhZ9sHhE3Sj",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const snapshot = $('Construir datos e indices').first().json.snapshot;\nreturn [{\n  json: {\n    ok: true,\n    message: 'Datos publicados usando exclusivamente nodos nativos de GitHub.',\n    scrapedAt: snapshot.scrapedAt,\n    sourceMeasuredAt: snapshot.sourceMeasuredAt,\n    global: snapshot.global\n  }\n}];"
+      },
+      "id": "82dadef6-3bd6-4ad1-823d-65dc86a8693d",
+      "name": "Resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2336,
+        224
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cada 30 minutos": {
+      "main": [
+        [
+          {
+            "node": "Configuracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuracion": {
+      "main": [
+        [
+          {
+            "node": "Descargar saldos BioCloud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar saldos BioCloud": {
+      "main": [
+        [
+          {
+            "node": "Extraer surtidores visibles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer surtidores visibles": {
+      "main": [
+        [
+          {
+            "node": "Fecha local",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fecha local": {
+      "main": [
+        [
+          {
+            "node": "GitHub - Leer catalog.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Leer catalog.json": {
+      "main": [
+        [
+          {
+            "node": "GitHub - Leer stats.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Leer stats.json": {
+      "main": [
+        [
+          {
+            "node": "GitHub - Leer historico diario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Leer historico diario": {
+      "main": [
+        [
+          {
+            "node": "GitHub - Leer latest.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Leer latest.json": {
+      "main": [
+        [
+          {
+            "node": "GitHub - Leer saldos-history.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Leer saldos-history.json": {
+      "main": [
+        [
+          {
+            "node": "Construir datos e indices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir datos e indices": {
+      "main": [
+        [
+          {
+            "node": "¿Existe catalog.json?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Existe catalog.json?": {
+      "main": [
+        [
+          {
+            "node": "GitHub - Editar catalog.json",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GitHub - Crear catalog.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Editar catalog.json": {
+      "main": [
+        [
+          {
+            "node": "¿Existe stats.json?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Crear catalog.json": {
+      "main": [
+        [
+          {
+            "node": "¿Existe stats.json?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Existe stats.json?": {
+      "main": [
+        [
+          {
+            "node": "GitHub - Editar stats.json",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GitHub - Crear stats.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Editar stats.json": {
+      "main": [
+        [
+          {
+            "node": "¿Existe historico diario?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Crear stats.json": {
+      "main": [
+        [
+          {
+            "node": "¿Existe historico diario?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Existe historico diario?": {
+      "main": [
+        [
+          {
+            "node": "GitHub - Editar historico diario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GitHub - Crear historico diario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Editar historico diario": {
+      "main": [
+        [
+          {
+            "node": "¿Existe latest.json?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Crear historico diario": {
+      "main": [
+        [
+          {
+            "node": "¿Existe latest.json?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Existe latest.json?": {
+      "main": [
+        [
+          {
+            "node": "GitHub - Editar latest.json",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GitHub - Crear latest.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Editar latest.json": {
+      "main": [
+        [
+          {
+            "node": "¿Existe saldos-history.json?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Crear latest.json": {
+      "main": [
+        [
+          {
+            "node": "¿Existe saldos-history.json?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Existe saldos-history.json?": {
+      "main": [
+        [
+          {
+            "node": "GitHub - Editar saldos-history.json",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GitHub - Crear saldos-history.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Editar saldos-history.json": {
+      "main": [
+        [
+          {
+            "node": "Resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub - Crear saldos-history.json": {
+      "main": [
+        [
+          {
+            "node": "Resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b5b5243c-cb27-4b01-bdf7-58029dbc7a2f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "075b6552667d15576055663e591efd934165e386ffd7ca0546fe56e04eb6aa74"
+  },
+  "nodeGroups": [],
+  "id": "LneHpz85oUmA2ULW",
+  "tags": []
+}

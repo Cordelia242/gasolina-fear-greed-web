@@ -3,14 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0b0d10" />
+  <meta name="theme-color" content="#17151b" />
   <title>Gasolina Index · Santa Cruz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <main class="shell">
     <header class="topbar">
-      <div><p class="eyebrow">SANTA CRUZ · BOLIVIA</p><h1>Gasolina Index</h1><p class="subtitle">Disponibilidad de gasolina en tiempo casi real</p></div>
+      <div><p class="eyebrow">SANTA CRUZ · BOLIVIA</p><h1>Gasolina Index</h1><p class="subtitle">No hice esto antes porque pense que iba a mejorar</p></div>
       <div class="updated"><span class="dot" id="liveDot"></span><span id="updatedAt">Cargando…</span></div>
     </header>
 
@@ -20,15 +23,15 @@
           <div><span class="label">ÍNDICE GLOBAL</span><div class="score-line"><strong id="globalScore">--</strong><span>/100</span></div></div>
           <div class="state-pill" id="globalState">—</div>
         </div>
-        <div class="gauge">
-          <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div><div class="gauge-marker" id="gaugeMarker"></div></div>
-          <div class="gauge-labels"><span>Crítico</span><span>Escasez</span><span>Normal</span><span>Abundancia</span><span>Saturado</span></div>
+        <div class="meter-line">
+          <div class="meter-track"><div class="meter-fill" id="gaugeFill"></div></div>
+          <div class="meter-scale"><span>Crítico</span><span>Escasez</span><span>Normal</span><span>Abundancia</span><span>Saturado</span></div>
         </div>
-        <div class="summary-row">
-          <div><span>Litros reportados</span><strong id="totalLiters">—</strong></div>
-          <div><span>Surtidores con saldo</span><strong id="availableStations">—</strong></div>
-          <div><span>Total conocidos</span><strong id="totalStations">—</strong></div>
-        </div>
+        <dl class="props">
+          <div class="prop"><dt>Litros reportados</dt><dd id="totalLiters">—</dd></div>
+          <div class="prop"><dt>Surtidores con saldo</dt><dd id="availableStations">—</dd></div>
+          <div class="prop"><dt>Total conocidos</dt><dd id="totalStations">—</dd></div>
+        </dl>
       </article>
 
       <article class="card trend-card">
@@ -44,6 +47,19 @@
 
     <section class="stations-grid" id="stationsGrid"></section>
     <footer>Datos obtenidos automáticamente desde BioCloud. Este sitio no representa a YPFB ni garantiza disponibilidad al momento de llegada.</footer>
+
+    <dialog class="station-dialog" id="stationDialog">
+      <div class="dialog-head">
+        <div><span class="label" id="dialogAddress">—</span><h2 id="dialogName">—</h2></div>
+        <button class="dialog-close" id="dialogClose" aria-label="Cerrar" type="button">✕</button>
+      </div>
+      <dl class="props">
+        <div class="prop"><dt>Litros actuales</dt><dd id="dialogLiters">—</dd></div>
+        <div class="prop"><dt>Mínimo del historial</dt><dd id="dialogMin">—</dd></div>
+        <div class="prop"><dt>Máximo del historial</dt><dd id="dialogMax">—</dd></div>
+      </dl>
+      <div class="chart-wrap"><svg id="stationChart" viewBox="0 0 600 220" preserveAspectRatio="none" aria-label="Litros en el tiempo"></svg></div>
+    </dialog>
   </main>
   <script type="module" src="./app.js"></script>
 </body>
