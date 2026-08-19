@@ -15,6 +15,7 @@ const PANEL_COLOR=rootStyle.getPropertyValue('--panel').trim();
 const VOLUME_COLOR=rootStyle.getPropertyValue('--volume').trim();
 const VOLUME_IN_COLOR=rootStyle.getPropertyValue('--volume-in').trim();
 const VOLUME_OUT_COLOR=rootStyle.getPropertyValue('--volume-out').trim();
+const BALANCE_COLOR=rootStyle.getPropertyValue('--balance-line').trim();
 function compactLiters(v){const n=Number(v)||0;if(n>=1000)return `${(n/1000).toFixed(n>=10000?0:1)}K L`;return `${Math.round(n)} L`}
 const clampScore=v=>Math.max(0,Math.min(100,Number(v)||0));
 const scoreToState=v=>STATE_ORDER[Math.min(4,Math.floor(clampScore(v)/20))];
@@ -38,7 +39,7 @@ const guide=svg.querySelector('.chart-guide'),marker=svg.querySelector('.chart-m
 svg.style.cursor='pointer';
 svg.onclick=evt=>{const rect=svg.getBoundingClientRect(),svgX=(evt.clientX-rect.left)*(w/rect.width),step=(w-p*2)/(values.length-1),idx=Math.max(0,Math.min(values.length-1,Math.round((svgX-p)/step))),pt=pts[idx];guide.setAttribute('x1',pt[0]);guide.setAttribute('x2',pt[0]);guide.style.display='';marker.setAttribute('cx',pt[0]);marker.setAttribute('cy',pt[1]);marker.style.display='';if(detailEl){const t=times[idx],timeLabel=t?new Intl.DateTimeFormat('es-BO',{dateStyle:'short',timeStyle:'short'}).format(new Date(t)):`Punto ${idx+1}`,valueLabel=formatValue?formatValue(values[idx]):values[idx];detailEl.textContent=`${timeLabel} · ${valueLabel}`}};
 return true}
-function drawZoneChart(svg,scores,times,detailEl,sold){svg.onclick=null;svg.style.cursor='';
+function drawZoneChart(svg,scores,times,detailEl,sold,liters){svg.onclick=null;svg.style.cursor='';
 const w=Math.max(280,Math.round(svg.getBoundingClientRect().width))||600,h=Math.max(160,Math.round(svg.getBoundingClientRect().height))||220;
 svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
 if(scores.length<2){svg.innerHTML=`<text x="${w/2}" y="${h/2}" text-anchor="middle" fill="#6f6a7d" font-size="13" font-family="ui-monospace,monospace">Aún no hay suficiente histórico</text>`;if(detailEl)detailEl.textContent='Aún no hay suficiente histórico para mostrar detalle.';return}
@@ -46,6 +47,10 @@ const p=14,plotW=w-p*2,plotH=h-p*2,bandH=plotH/5;
 const pts=scores.map((v,i)=>[p+i*(plotW/(scores.length-1)),h-p-(clampScore(v)/100)*plotH]);
 const parts=[];
 for(let i=0;i<5;i++){const y=p+i*bandH,state=STATE_ORDER[4-i],color=STATE_COLORS[state];parts.push(`<rect x="${p}" y="${y.toFixed(1)}" width="${plotW}" height="${bandH.toFixed(1)}" fill="${color}" fill-opacity="${i===0?0.16:0.07}"></rect>`);if(i>0)parts.push(`<line x1="${p}" y1="${y.toFixed(1)}" x2="${w-p}" y2="${y.toFixed(1)}" stroke="#322e3a" stroke-width="1" stroke-dasharray="2,4"></line>`);parts.push(`<text x="${w-p-6}" y="${(y+bandH/2+3).toFixed(1)}" text-anchor="end" font-size="9" font-family="'IBM Plex Mono',ui-monospace,monospace" fill="${color}" opacity="0.85">${stateLabel(state)}</text>`)}
+const hasBalance=Array.isArray(liters)&&liters.length===scores.length;
+if(hasBalance){const minL=Math.min(...liters),maxL=Math.max(...liters),spanL=(maxL-minL)||1,balPts=liters.map((v,i)=>[pts[i][0],h-p-((v-minL)/spanL)*plotH]),balD=balPts.map((pt,i)=>`${i?'L':'M'}${pt[0].toFixed(1)},${pt[1].toFixed(1)}`).join(' '),lastBal=balPts.at(-1);
+parts.push(`<path d="${balD}" fill="none" stroke="${BALANCE_COLOR}" stroke-width="1.5" stroke-opacity="0.55" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>`);
+parts.push(`<circle cx="${lastBal[0].toFixed(1)}" cy="${lastBal[1].toFixed(1)}" r="3" fill="${BALANCE_COLOR}"></circle>`)}
 const hasVolume=Array.isArray(sold)&&sold.length===scores.length;
 if(hasVolume){const volFrac=0.26,maxAbs=Math.max(1,...sold.map(v=>Math.abs(v))),barBaseY=h-p,barZoneH=volFrac*plotH,zeroY=barBaseY-barZoneH/2,halfH=barZoneH/2,barW=Math.max(1,(plotW/(scores.length-1))*0.92);
 sold.forEach((v,i)=>{const bh=(Math.abs(v)/maxAbs)*halfH;if(bh<=0)return;const x=pts[i][0]-barW/2,y=v>=0?zeroY-bh:zeroY,color=v>=0?VOLUME_IN_COLOR:VOLUME_OUT_COLOR;parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${color}" fill-opacity="0.55"></rect>`)});
@@ -66,9 +71,9 @@ svg.innerHTML=parts.join('');
 if(detailEl)detailEl.textContent='Toca el gráfico para ver el detalle de un momento.';
 const guide=svg.querySelector('.chart-guide'),marker=svg.querySelector('.chart-marker');
 svg.style.cursor='pointer';
-svg.onclick=evt=>{const rect=svg.getBoundingClientRect(),svgX=(evt.clientX-rect.left)*(w/rect.width),step=plotW/(pts.length-1),idx=Math.max(0,Math.min(pts.length-1,Math.round((svgX-p)/step))),pt=pts[idx];guide.setAttribute('x1',pt[0]);guide.setAttribute('x2',pt[0]);guide.style.display='';marker.setAttribute('cx',pt[0]);marker.setAttribute('cy',pt[1]);marker.setAttribute('stroke',scoreColor(scores[idx]));marker.style.display='';if(detailEl){const t=times[idx],timeLabel=t?new Intl.DateTimeFormat('es-BO',{dateStyle:'short',timeStyle:'short'}).format(new Date(t)):`Punto ${idx+1}`,volLabel=hasVolume?(sold[idx]>0?` · +${fmt.format(Math.round(sold[idx]))} L ingresados`:sold[idx]<0?` · ${fmt.format(Math.round(Math.abs(sold[idx])))} L vendidos`:' · Sin cambio de stock'):'';detailEl.textContent=`${timeLabel} · ${Math.round(scores[idx])}/100 · ${stateLabel(scoreToState(scores[idx]))}${volLabel}`}}}
+svg.onclick=evt=>{const rect=svg.getBoundingClientRect(),svgX=(evt.clientX-rect.left)*(w/rect.width),step=plotW/(pts.length-1),idx=Math.max(0,Math.min(pts.length-1,Math.round((svgX-p)/step))),pt=pts[idx];guide.setAttribute('x1',pt[0]);guide.setAttribute('x2',pt[0]);guide.style.display='';marker.setAttribute('cx',pt[0]);marker.setAttribute('cy',pt[1]);marker.setAttribute('stroke',scoreColor(scores[idx]));marker.style.display='';if(detailEl){const t=times[idx],timeLabel=t?new Intl.DateTimeFormat('es-BO',{dateStyle:'short',timeStyle:'short'}).format(new Date(t)):`Punto ${idx+1}`,volLabel=hasVolume?(sold[idx]>0?` · +${fmt.format(Math.round(sold[idx]))} L ingresados`:sold[idx]<0?` · ${fmt.format(Math.round(Math.abs(sold[idx])))} L vendidos`:' · Sin cambio de stock'):'',balLabel=hasBalance?` · Saldo: ${fmt.format(Math.round(liters[idx]))} L`:'';detailEl.textContent=`${timeLabel} · ${Math.round(scores[idx])}/100 · ${stateLabel(scoreToState(scores[idx]))}${balLabel}${volLabel}`}}}
 function downsample(scores,times,max){if(scores.length<=max)return{scores,times};const stride=Math.ceil(scores.length/max),outS=[],outT=[];for(let i=0;i<scores.length;i+=stride){outS.push(scores[i]);outT.push(times[i])}if(outT.at(-1)!==times.at(-1)){outS.push(scores.at(-1));outT.push(times.at(-1))}return{scores:outS,times:outT}}
-function downsampleWithVolume(scores,sold,times,max){if(scores.length<=max)return{scores,sold,times};const stride=Math.ceil(scores.length/max),outS=[],outV=[],outT=[];for(let i=0;i<scores.length;i+=stride){const end=Math.min(i+stride,scores.length);outS.push(scores[i]);outT.push(times[i]);let sum=0;for(let j=i;j<end;j++)sum+=sold[j];outV.push(sum)}if(outT.at(-1)!==times.at(-1)){outS.push(scores.at(-1));outT.push(times.at(-1));outV.push(sold.at(-1))}return{scores:outS,sold:outV,times:outT}}
+function downsampleWithVolume(scores,sold,liters,times,max){if(scores.length<=max)return{scores,sold,liters,times};const stride=Math.ceil(scores.length/max),outS=[],outV=[],outL=[],outT=[];for(let i=0;i<scores.length;i+=stride){const end=Math.min(i+stride,scores.length);outS.push(scores[i]);outT.push(times[i]);outL.push(liters[i]);let sum=0;for(let j=i;j<end;j++)sum+=sold[j];outV.push(sum)}if(outT.at(-1)!==times.at(-1)){outS.push(scores.at(-1));outT.push(times.at(-1));outV.push(sold.at(-1));outL.push(liters.at(-1))}return{scores:outS,sold:outV,liters:outL,times:outT}}
 async function fetchHistoryDay(dateStr){try{return await getJSON(`./public/data/history/${dateStr}.json`)}catch{return null}}
 async function loadHistoryRange(maxDays){const cap=Math.min(maxDays,400),missGrace=20;let hits=0,misses=0;const files=[];
 for(let start=0;start<cap;start+=10){const batch=[];for(let i=start;i<Math.min(start+10,cap);i++)batch.push(i);const results=await Promise.all(batch.map(i=>fetchHistoryDay(dateOffsetString(i))));let batchHits=0;results.forEach(f=>{if(f){files.push(f);batchHits++;hits++}else misses++});if(batchHits===0&&((hits>0&&misses>=missGrace)||(hits===0&&misses>=missGrace)))break}
@@ -80,8 +85,8 @@ const rangeCache={};
 function getRangeSnapshots(maxDays,key){if(!rangeCache[key])rangeCache[key]=loadHistoryRange(maxDays);return rangeCache[key]}
 async function renderTrendChart(rangeKey){const days=rangeKey==='7d'?7:rangeKey==='30d'?30:400;const snaps=await getRangeSnapshots(days,rangeKey);const points=snaps.map(s=>({score:clampScore(s.global?.score),liters:Number(s.global?.totalLiters||0),time:s.scrapedAt}));if(latest&&(!points.length||new Date(latest.scrapedAt)>new Date(points.at(-1).time)))points.push({score:clampScore(latest.global.score),liters:Number(latest.global.totalLiters||0),time:latest.scrapedAt});
 const rawScores=points.map(p=>p.score),rawTimes=points.map(p=>p.time),rawLiters=points.map(p=>p.liters),rawDelta=rawLiters.map((v,i)=>i===0?0:v-rawLiters[i-1]);
-const{scores,sold,times}=downsampleWithVolume(rawScores,rawDelta,rawTimes,180);
-drawZoneChart($('#trendChart'),scores,times,$('#trendChartDetail'),sold);
+const{scores,sold,liters,times}=downsampleWithVolume(rawScores,rawDelta,rawLiters,rawTimes,180);
+drawZoneChart($('#trendChart'),scores,times,$('#trendChartDetail'),sold,liters);
 if(scores.length<2){$('#trendDelta').textContent='—';return}const delta=scores.at(-1)-scores[0];$('#trendDelta').textContent=`${delta>=0?'+':''}${delta.toFixed(1)} pts`}
 async function fetchSaldosDay(dateStr){try{return await getJSON(`./public/data/saldos/${dateStr}.json`)}catch{return null}}
 async function getSaldosRecords(){if(saldosRecords)return saldosRecords;const days=await Promise.all(Array.from({length:SALDOS_DAYS_BACK},(_,i)=>fetchSaldosDay(dateOffsetString(i))));saldosRecords=days.filter(Boolean).flatMap(d=>d.records||[]);return saldosRecords}
