@@ -48,11 +48,10 @@
             <button class="filter" data-range="all" type="button">Todo</button>
           </div>
         </div>
-        <div class="chart-legend">
-          <span class="legend-item"><span class="legend-dot dot-index"></span>Índice de escasez (línea, coloreada por zona)</span>
-          <span class="legend-item"><span class="legend-dot dot-balance"></span>Saldo total (litros)</span>
-          <span class="legend-item"><span class="legend-dot dot-volume-in"></span>Litros ingresados (recargas)</span>
-          <span class="legend-item"><span class="legend-dot dot-volume-out"></span>Litros vendidos</span>
+        <div class="chart-legend" id="chartLegend">
+          <button class="legend-item active" data-series="index" type="button" aria-pressed="true"><span class="legend-dot dot-index"></span>Índice de escasez</button>
+          <button class="legend-item active" data-series="balance" type="button" aria-pressed="true"><span class="legend-dot dot-balance"></span>Saldo total (litros)</button>
+          <button class="legend-item active" data-series="volume" type="button" aria-pressed="true"><span class="legend-dot dot-volume"></span>Volumen (litros)</button>
         </div>
         <div class="chart-wrap"><svg id="trendChart" viewBox="0 0 600 220" preserveAspectRatio="none" aria-label="Evolución del índice"></svg></div>
         <div class="chart-detail" id="trendChartDetail">Toca el gráfico para ver el detalle de un momento.</div>
