@@ -1,0 +1,22 @@
+name: Provisional index CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app.js'
+      - 'gasolina-fear-greed-workflow(1).json'
+      - 'public/data/**'
+      - 'scripts/schema-contract.test.js'
+      - '.github/workflows/provisional-index-ci.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check app.js
+      - run: node --test scripts/schema-contract.test.js
