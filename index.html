@@ -17,10 +17,10 @@
       <div class="updated"><span class="dot" id="liveDot"></span><span id="updatedAt">Cargando…</span></div>
     </header>
 
-    <section class="hero-grid">
-      <div class="hero-left">
-        <article class="card gauge-card">
-          <span class="label">ÍNDICE GLOBAL</span>
+    <section class="hero-stack">
+      <article class="card gauge-card">
+        <span class="label">ÍNDICE GLOBAL</span>
+        <div class="gauge-row">
           <div class="gauge-wrap">
             <svg class="gauge" id="gaugeSvg" viewBox="0 0 200 112" aria-label="Medidor del índice global"></svg>
             <div class="gauge-value">
@@ -33,25 +33,8 @@
             <div class="prop"><dt>Surtidores con saldo</dt><dd id="availableStations">—</dd></div>
             <div class="prop"><dt>Total conocidos</dt><dd id="totalStations">—</dd></div>
           </dl>
-        </article>
-
-        <article class="card hist-card">
-          <span class="label">VALORES HISTÓRICOS</span>
-          <dl class="props">
-            <div class="prop"><dt>Ayer</dt><dd><span class="value-pill" id="histYesterday">—</span></dd></div>
-            <div class="prop"><dt>Última semana</dt><dd><span class="value-pill" id="histWeek">—</span></dd></div>
-            <div class="prop"><dt>Último mes</dt><dd><span class="value-pill" id="histMonth">—</span></dd></div>
-          </dl>
-        </article>
-
-        <article class="card range-card">
-          <span class="label">MÁXIMO Y MÍNIMO REGISTRADOS</span>
-          <dl class="props">
-            <div class="prop"><dt>Máximo <span class="prop-date" id="histHighDate"></span></dt><dd><span class="value-pill" id="histHigh">—</span></dd></div>
-            <div class="prop"><dt>Mínimo <span class="prop-date" id="histLowDate"></span></dt><dd><span class="value-pill" id="histLow">—</span></dd></div>
-          </dl>
-        </article>
-      </div>
+        </div>
+      </article>
 
       <article class="card trend-card">
         <div class="card-title-row">
