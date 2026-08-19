@@ -53,8 +53,10 @@
           <button class="legend-item active" data-series="balance" type="button" aria-pressed="true"><span class="legend-dot dot-balance"></span>Saldo total (litros)</button>
           <button class="legend-item active" data-series="volume" type="button" aria-pressed="true"><span class="legend-dot dot-volume"></span>Volumen (litros)</button>
         </div>
-        <div class="chart-wrap"><svg id="trendChart" viewBox="0 0 600 220" preserveAspectRatio="none" aria-label="Evolución del índice"></svg></div>
-        <div class="chart-detail" id="trendChartDetail">Toca el gráfico para ver el detalle de un momento.</div>
+        <div class="chart-wrap" id="trendChartWrap">
+          <svg id="trendChart" viewBox="0 0 600 220" preserveAspectRatio="none" aria-label="Evolución del índice"></svg>
+          <div class="chart-tooltip" id="trendChartTooltip" role="status" aria-live="polite"></div>
+        </div>
       </article>
     </section>
 
