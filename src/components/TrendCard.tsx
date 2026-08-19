@@ -108,7 +108,7 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
           <p className="chart-empty">Aún no hay suficiente histórico</p>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 10, right: 40, left: 0, bottom: 0 }}>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 40, left: 0, bottom: 0 }} barCategoryGap="8%">
               <ReferenceArea yAxisId="score" y1={80} y2={100} fill={PRESSURE_STATE_COLORS.PRESION_EXTREMA} fillOpacity={0.1} />
               <ReferenceArea yAxisId="score" y1={0} y2={20} fill={PRESSURE_STATE_COLORS.SIN_PRESION} fillOpacity={0.1} />
               {[20, 40, 60, 80].map((y) => (
@@ -127,7 +127,7 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
               <YAxis yAxisId="volume" hide domain={[0, (max: number) => (max > 0 ? max / VOLUME_ZONE_FRACTION : 1)]} />
               <Tooltip content={<TrendTooltip series={series} />} />
               {series.volume && (
-                <Bar yAxisId="volume" dataKey="absSold" barSize={4} isAnimationActive={false}>
+                <Bar yAxisId="volume" dataKey="absSold" isAnimationActive={false}>
                   {chartData.map((d, i) => (
                     <Cell key={i} fill={d.sold >= 0 ? VOLUME_IN_COLOR : VOLUME_OUT_COLOR} />
                   ))}
