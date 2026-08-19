@@ -11,11 +11,13 @@ function assertSnapshot(snapshot) {
   assert.ok(snapshot.global?.pressure, 'global.pressure debe existir');
   assert.equal('score' in snapshot.global, false, 'global.score ambiguo debe eliminarse');
   assert.equal('state' in snapshot.global, false, 'global.state ambiguo debe eliminarse');
+  assert.match(snapshot.global.pressure.mode || '', /^(PROVISIONAL|COMPLETE)$/, 'global.pressure.mode debe indicar la fase del indice');
   for (const station of snapshot.stations || []) {
     assert.ok(station.fuelLevel, `${station.key}: fuelLevel debe existir`);
     assert.ok(station.pressure, `${station.key}: pressure debe existir`);
     assert.equal('score' in station, false, `${station.key}: score ambiguo debe eliminarse`);
     assert.equal('state' in station, false, `${station.key}: state ambiguo debe eliminarse`);
+    assert.match(station.pressure.mode || '', /^(PROVISIONAL|COMPLETE)$/, `${station.key}: pressure.mode debe existir`);
   }
 }
 
@@ -36,6 +38,8 @@ test('la UI usa nivel de combustible en tarjetas y presión en el índice', () =
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.match(app, /fuelLevel/);
   assert.match(app, /pressure/);
+  assert.match(app, /ÍNDICE PROVISIONAL|INDICE PROVISIONAL/);
+  assert.match(app, /ÍNDICE COMPLETO|INDICE COMPLETO/);
   assert.match(html, /Índice de presión/i);
   assert.match(html, /Nivel de combustible/i);
 });
@@ -47,11 +51,15 @@ test('el gráfico conserva saldo y volumen aunque pressure.score sea null', () =
   assert.match(app, /rawScores=points\.map\(p=>p\.score\)/);
 });
 
-test('el workflow genera fuelLevel y pressure explícitos', () => {
+test('el workflow genera indice provisional y completo', () => {
   const workflow = readJson('gasolina-fear-greed-workflow(1).json');
   const node = workflow.nodes.find(n => n.name === 'Construir datos e indices');
   assert.ok(node, 'Debe existir Construir datos e indices');
-  assert.match(node.parameters.jsCode, /fuelLevel/);
-  assert.match(node.parameters.jsCode, /pressure/);
-  assert.match(node.parameters.jsCode, /pressureStateFor/);
+  const code = node.parameters.jsCode;
+  assert.match(code, /PROVISIONAL/);
+  assert.match(code, /COMPLETE/);
+  assert.match(code, /provisionalPressureScoreFor/);
+  assert.match(code, /completePressureScoreFor/);
+  assert.match(code, /stationsWithoutFuel/);
+  assert.match(code, /inventoryTrend/);
 });
