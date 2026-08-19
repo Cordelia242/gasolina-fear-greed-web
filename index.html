@@ -14,7 +14,10 @@
   <main class="shell">
     <header class="topbar">
       <div><p class="eyebrow">SANTA CRUZ · BOLIVIA</p><h1>Gasolina Index</h1><p class="subtitle">No hice esto antes porque pense que iba a mejorar</p></div>
-      <div class="updated"><span class="dot" id="liveDot"></span><span id="updatedAt">Cargando…</span></div>
+      <div class="updated-wrap">
+        <div class="updated"><span class="dot" id="liveDot"></span><span id="updatedAt">Cargando…</span></div>
+        <p class="update-freq">Se actualiza cada 30 minutos</p>
+      </div>
     </header>
 
     <section class="hero-stack">
@@ -65,10 +68,10 @@
       </div>
       <dl class="props">
         <div class="prop"><dt>Litros actuales</dt><dd id="dialogLiters">—</dd></div>
-        <div class="prop"><dt>Mínimo del rango</dt><dd id="dialogMin">—</dd></div>
-        <div class="prop"><dt>Máximo del rango</dt><dd id="dialogMax">—</dd></div>
+        <div class="prop"><dt>Mínimo (5h)</dt><dd id="dialogMin">—</dd></div>
+        <div class="prop"><dt>Máximo (5h)</dt><dd id="dialogMax">—</dd></div>
       </dl>
-      <div class="filters range-filters"><button class="filter" data-range="5h">5 horas</button><button class="filter" data-range="10h">10 horas</button><button class="filter active" data-range="1d">1 día</button></div>
+      <p class="chart-note">Mostrando las últimas 5 horas</p>
       <div class="chart-wrap"><svg id="stationChart" viewBox="0 0 600 220" preserveAspectRatio="none" aria-label="Litros en el tiempo"></svg></div>
       <div class="chart-detail" id="stationChartDetail">Toca el gráfico para ver el detalle de un momento.</div>
     </dialog>

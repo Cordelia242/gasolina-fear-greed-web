@@ -33,8 +33,10 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-sans
 h1{margin:8px 0 4px;font-family:var(--font-mono);font-size:clamp(1.8rem,4.4vw,2.6rem);font-weight:600;letter-spacing:-.02em}
 h2{margin:4px 0 0;font-size:1rem;font-weight:600;letter-spacing:-.01em}
 .subtitle{margin:0;color:var(--muted)}
-.updated{display:flex;align-items:center;gap:8px;color:var(--muted);font-family:var(--font-mono);font-size:.78rem;margin-top:10px}
+.updated-wrap{text-align:right}
+.updated{display:flex;align-items:center;justify-content:flex-end;gap:8px;color:var(--muted);font-family:var(--font-mono);font-size:.78rem;margin-top:10px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none}
+.update-freq{margin:4px 0 0;color:var(--muted-2);font-family:var(--font-mono);font-size:.7rem}
 
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
 .hero-stack{display:flex;flex-direction:column;gap:16px}
@@ -99,7 +101,7 @@ footer{color:var(--muted-2);font-size:.72rem;margin-top:32px;text-align:center}
 .dialog-head h2{margin:6px 0 0}
 .dialog-close{background:var(--panel-alt);color:var(--text);border:1px solid var(--line);border-radius:var(--radius-sm);width:30px;height:30px;cursor:pointer;font-size:.85rem;line-height:1}
 .dialog-close:hover{border-color:var(--accent)}
-.station-dialog .range-filters{margin-top:18px}
+.chart-note{margin:18px 0 0;color:var(--muted);font-family:var(--font-mono);font-size:.72rem;letter-spacing:.02em}
 .station-dialog .chart-wrap{height:190px;margin-top:14px}
 .chart-detail{margin-top:10px;padding:9px 12px;background:var(--panel-alt);border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--text);font-size:.78rem;text-align:center}
 
@@ -109,6 +111,8 @@ footer{color:var(--muted-2);font-size:.72rem;margin-top:32px;text-align:center}
 @media(max-width:620px){
   .shell{width:min(100% - 24px,1180px);padding:22px 0 40px}
   .topbar{flex-direction:column;align-items:flex-start;gap:10px}
+  .updated-wrap{text-align:left}
+  .updated{justify-content:flex-start}
   .section-head{flex-direction:column;align-items:flex-start;gap:12px}
   .gauge-card,.trend-card{padding:18px}
   .gauge-row{justify-content:center;text-align:center}
