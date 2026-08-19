@@ -29,6 +29,9 @@ const SERIES_LABEL: Record<SeriesKey, string> = {
 const RANGES: ChartRange[] = ['7d', '30d', 'all'];
 const RANGE_LABEL: Record<ChartRange, string> = { '7d': '7d', '30d': '30d', all: 'Todo' };
 
+// Las barras de volumen ocupan solo esta fracción del alto del gráfico, pegadas abajo.
+const VOLUME_ZONE_FRACTION = 0.22;
+
 function buildPoints(snapshots: Snapshot[], latest: Snapshot | null) {
   const points = snapshots.map((s) => ({
     score: Number.isFinite(s.global?.pressure?.score) ? clampScore(s.global.pressure.score) : null,
@@ -57,7 +60,7 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
     const rawLiters = points.map((p) => p.liters);
     const rawDelta = rawLiters.map((v, i) => (i === 0 ? 0 : v - rawLiters[i - 1]));
     const { scores, sold, liters, times } = downsampleWithVolume(rawScores, rawDelta, rawLiters, rawTimes, 180);
-    return times.map((time, i) => ({ time, score: scores[i], sold: sold[i], liters: liters[i] }));
+    return times.map((time, i) => ({ time, score: scores[i], sold: sold[i], absSold: Math.abs(sold[i]), liters: liters[i] }));
   }, [snapshots, latest]);
 
   const pressureScores = chartData.map((d) => d.score).filter((v): v is number => Number.isFinite(v));
@@ -119,10 +122,12 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
               />
               <YAxis yAxisId="score" domain={[0, 100]} hide />
               <YAxis yAxisId="liters" orientation="right" hide domain={['dataMin', 'dataMax']} />
-              <YAxis yAxisId="volume" hide domain={['auto', 'auto']} />
+              {/* dominio escalado a VOLUME_ZONE_FRACTION del alto: las barras (siempre positivas, en absSold)
+                  quedan confinadas a una franja abajo del gráfico en vez de ocupar todo el alto */}
+              <YAxis yAxisId="volume" hide domain={[0, (max: number) => (max > 0 ? max / VOLUME_ZONE_FRACTION : 1)]} />
               <Tooltip content={<TrendTooltip series={series} />} />
               {series.volume && (
-                <Bar yAxisId="volume" dataKey="sold" barSize={4} isAnimationActive={false}>
+                <Bar yAxisId="volume" dataKey="absSold" barSize={4} isAnimationActive={false}>
                   {chartData.map((d, i) => (
                     <Cell key={i} fill={d.sold >= 0 ? VOLUME_IN_COLOR : VOLUME_OUT_COLOR} />
                   ))}
