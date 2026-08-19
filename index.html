@@ -68,10 +68,8 @@
       </div>
       <dl class="props">
         <div class="prop"><dt>Litros actuales</dt><dd id="dialogLiters">—</dd></div>
-        <div class="prop"><dt>Mínimo (5h)</dt><dd id="dialogMin">—</dd></div>
-        <div class="prop"><dt>Máximo (5h)</dt><dd id="dialogMax">—</dd></div>
       </dl>
-      <p class="chart-note">Mostrando las últimas 5 horas</p>
+      <div class="filters range-filters"><button class="filter active" data-range="5h">5 horas</button><button class="filter" data-range="10h">10 horas</button><button class="filter" data-range="1d">1 día</button></div>
       <div class="chart-wrap"><svg id="stationChart" viewBox="0 0 600 220" preserveAspectRatio="none" aria-label="Litros en el tiempo"></svg></div>
       <div class="chart-detail" id="stationChartDetail">Toca el gráfico para ver el detalle de un momento.</div>
     </dialog>
