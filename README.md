@@ -1,6 +1,23 @@
 # Gasolina Index
 
-Frontend estático sin backend. Consume los JSON generados por el workflow de n8n.
+Frontend React + Vite (sin backend propio) que consume los JSON generados
+por el workflow de n8n. La lógica de cálculo del índice vive en
+[`src/index-engine`](docs/index-engine.md) — un módulo puro, testeado y
+reutilizable tanto por n8n como por `scripts/recalculate-history.ts`. Ver
+[`docs/index-engine.md`](docs/index-engine.md) para la arquitectura completa,
+la clasificación RAW/DERIVADO/CACHE de `public/data`, y cómo recalcular el
+histórico o cambiar la fórmula.
+
+## Desarrollo
+
+```bash
+npm install
+npm run dev          # servidor de desarrollo (Vite)
+npm test             # motor + componentes + hooks + contrato de datos (Vitest)
+npm run build         # typecheck + build de producción
+npm run recalculate   # recalcula history/latest/stats desde saldos + crises
+npm run build:n8n-workflow  # regenera el Code node del workflow desde src/index-engine
+```
 
 ## Datos esperados
 

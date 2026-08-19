@@ -9,13 +9,14 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src", "vite.config.ts"],
+  "include": ["src", "vite.config.ts", "scripts", "tests"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
