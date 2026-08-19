@@ -13,6 +13,8 @@ const STATE_ORDER=['CRITICO','ESCASEZ','NORMAL','ABUNDANCIA','SATURADO'];
 const STATE_COLORS=Object.fromEntries(STATE_ORDER.map(s=>[s,rootStyle.getPropertyValue(`--s-${s.toLowerCase()}`).trim()]));
 const PANEL_COLOR=rootStyle.getPropertyValue('--panel').trim();
 const VOLUME_COLOR=rootStyle.getPropertyValue('--volume').trim();
+const VOLUME_IN_COLOR=rootStyle.getPropertyValue('--volume-in').trim();
+const VOLUME_OUT_COLOR=rootStyle.getPropertyValue('--volume-out').trim();
 function compactLiters(v){const n=Number(v)||0;if(n>=1000)return `${(n/1000).toFixed(n>=10000?0:1)}K L`;return `${Math.round(n)} L`}
 const clampScore=v=>Math.max(0,Math.min(100,Number(v)||0));
 const scoreToState=v=>STATE_ORDER[Math.min(4,Math.floor(clampScore(v)/20))];
@@ -45,11 +47,12 @@ const pts=scores.map((v,i)=>[p+i*(plotW/(scores.length-1)),h-p-(clampScore(v)/10
 const parts=[];
 for(let i=0;i<5;i++){const y=p+i*bandH,state=STATE_ORDER[4-i],color=STATE_COLORS[state];parts.push(`<rect x="${p}" y="${y.toFixed(1)}" width="${plotW}" height="${bandH.toFixed(1)}" fill="${color}" fill-opacity="${i===0?0.16:0.07}"></rect>`);if(i>0)parts.push(`<line x1="${p}" y1="${y.toFixed(1)}" x2="${w-p}" y2="${y.toFixed(1)}" stroke="#322e3a" stroke-width="1" stroke-dasharray="2,4"></line>`);parts.push(`<text x="${w-p-6}" y="${(y+bandH/2+3).toFixed(1)}" text-anchor="end" font-size="9" font-family="'IBM Plex Mono',ui-monospace,monospace" fill="${color}" opacity="0.85">${stateLabel(state)}</text>`)}
 const hasVolume=Array.isArray(sold)&&sold.length===scores.length;
-let volFrac=0,maxSold=1;
-if(hasVolume){volFrac=0.26;maxSold=Math.max(1,...sold);const barBaseY=h-p,barZoneH=volFrac*plotH,barW=Math.max(1,(plotW/(scores.length-1))*0.62);
-sold.forEach((v,i)=>{const bh=(v/maxSold)*barZoneH;if(bh<=0)return;const x=pts[i][0]-barW/2,y=barBaseY-bh;parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${VOLUME_COLOR}" fill-opacity="0.4"></rect>`)});
-parts.push(`<text x="${(p+3).toFixed(1)}" y="${(barBaseY-barZoneH+9).toFixed(1)}" text-anchor="start" font-size="8" font-family="'IBM Plex Mono',ui-monospace,monospace" fill="${VOLUME_COLOR}" opacity="0.75">${compactLiters(maxSold)}</text>`);
-parts.push(`<text x="${(p+3).toFixed(1)}" y="${(barBaseY-3).toFixed(1)}" text-anchor="start" font-size="8" font-family="'IBM Plex Mono',ui-monospace,monospace" fill="${VOLUME_COLOR}" opacity="0.75">0 L</text>`)}
+if(hasVolume){const volFrac=0.26,maxAbs=Math.max(1,...sold.map(v=>Math.abs(v))),barBaseY=h-p,barZoneH=volFrac*plotH,zeroY=barBaseY-barZoneH/2,halfH=barZoneH/2,barW=Math.max(1,(plotW/(scores.length-1))*0.62);
+sold.forEach((v,i)=>{const bh=(Math.abs(v)/maxAbs)*halfH;if(bh<=0)return;const x=pts[i][0]-barW/2,y=v>=0?zeroY-bh:zeroY,color=v>=0?VOLUME_IN_COLOR:VOLUME_OUT_COLOR;parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${color}" fill-opacity="0.55"></rect>`)});
+parts.push(`<line x1="${p}" y1="${zeroY.toFixed(1)}" x2="${w-p}" y2="${zeroY.toFixed(1)}" stroke="${VOLUME_COLOR}" stroke-width="1" stroke-opacity="0.4"></line>`);
+parts.push(`<text x="${(p+3).toFixed(1)}" y="${(zeroY-halfH+9).toFixed(1)}" text-anchor="start" font-size="8" font-family="'IBM Plex Mono',ui-monospace,monospace" fill="${VOLUME_IN_COLOR}" opacity="0.85">+${compactLiters(maxAbs)}</text>`);
+parts.push(`<text x="${(p+3).toFixed(1)}" y="${(zeroY+3).toFixed(1)}" text-anchor="start" font-size="8" font-family="'IBM Plex Mono',ui-monospace,monospace" fill="${VOLUME_COLOR}" opacity="0.75">0 L</text>`);
+parts.push(`<text x="${(p+3).toFixed(1)}" y="${(zeroY+halfH-2).toFixed(1)}" text-anchor="start" font-size="8" font-family="'IBM Plex Mono',ui-monospace,monospace" fill="${VOLUME_OUT_COLOR}" opacity="0.85">-${compactLiters(maxAbs)}</text>`)}
 const tickCount=Math.min(5,times.length);
 for(let i=0;i<tickCount;i++){const idx=Math.round(i*(times.length-1)/(tickCount-1||1)),x=pts[idx][0],label=times[idx]?new Intl.DateTimeFormat('es-BO',{day:'2-digit',month:'short'}).format(new Date(times[idx])):'',anchor=i===0?'start':i===tickCount-1?'end':'middle';parts.push(`<text x="${x.toFixed(1)}" y="${h-2}" text-anchor="${anchor}" font-size="9" font-family="'IBM Plex Mono',ui-monospace,monospace" fill="#6f6a7d">${esc(label)}</text>`)}
 for(let i=1;i<pts.length;i++){const color=scoreColor((scores[i-1]+scores[i])/2);parts.push(`<path d="M${pts[i-1][0].toFixed(1)},${pts[i-1][1].toFixed(1)} L${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>`)}
@@ -63,7 +66,7 @@ svg.innerHTML=parts.join('');
 if(detailEl)detailEl.textContent='Toca el gráfico para ver el detalle de un momento.';
 const guide=svg.querySelector('.chart-guide'),marker=svg.querySelector('.chart-marker');
 svg.style.cursor='pointer';
-svg.onclick=evt=>{const rect=svg.getBoundingClientRect(),svgX=(evt.clientX-rect.left)*(w/rect.width),step=plotW/(pts.length-1),idx=Math.max(0,Math.min(pts.length-1,Math.round((svgX-p)/step))),pt=pts[idx];guide.setAttribute('x1',pt[0]);guide.setAttribute('x2',pt[0]);guide.style.display='';marker.setAttribute('cx',pt[0]);marker.setAttribute('cy',pt[1]);marker.setAttribute('stroke',scoreColor(scores[idx]));marker.style.display='';if(detailEl){const t=times[idx],timeLabel=t?new Intl.DateTimeFormat('es-BO',{dateStyle:'short',timeStyle:'short'}).format(new Date(t)):`Punto ${idx+1}`,volLabel=hasVolume?` · ${fmt.format(Math.round(sold[idx]))} L vendidos`:'';detailEl.textContent=`${timeLabel} · ${Math.round(scores[idx])}/100 · ${stateLabel(scoreToState(scores[idx]))}${volLabel}`}}}
+svg.onclick=evt=>{const rect=svg.getBoundingClientRect(),svgX=(evt.clientX-rect.left)*(w/rect.width),step=plotW/(pts.length-1),idx=Math.max(0,Math.min(pts.length-1,Math.round((svgX-p)/step))),pt=pts[idx];guide.setAttribute('x1',pt[0]);guide.setAttribute('x2',pt[0]);guide.style.display='';marker.setAttribute('cx',pt[0]);marker.setAttribute('cy',pt[1]);marker.setAttribute('stroke',scoreColor(scores[idx]));marker.style.display='';if(detailEl){const t=times[idx],timeLabel=t?new Intl.DateTimeFormat('es-BO',{dateStyle:'short',timeStyle:'short'}).format(new Date(t)):`Punto ${idx+1}`,volLabel=hasVolume?(sold[idx]>0?` · +${fmt.format(Math.round(sold[idx]))} L ingresados`:sold[idx]<0?` · ${fmt.format(Math.round(Math.abs(sold[idx])))} L vendidos`:' · Sin cambio de stock'):'';detailEl.textContent=`${timeLabel} · ${Math.round(scores[idx])}/100 · ${stateLabel(scoreToState(scores[idx]))}${volLabel}`}}}
 function downsample(scores,times,max){if(scores.length<=max)return{scores,times};const stride=Math.ceil(scores.length/max),outS=[],outT=[];for(let i=0;i<scores.length;i+=stride){outS.push(scores[i]);outT.push(times[i])}if(outT.at(-1)!==times.at(-1)){outS.push(scores.at(-1));outT.push(times.at(-1))}return{scores:outS,times:outT}}
 function downsampleWithVolume(scores,sold,times,max){if(scores.length<=max)return{scores,sold,times};const stride=Math.ceil(scores.length/max),outS=[],outV=[],outT=[];for(let i=0;i<scores.length;i+=stride){const end=Math.min(i+stride,scores.length);outS.push(scores[i]);outT.push(times[i]);let sum=0;for(let j=i;j<end;j++)sum+=sold[j];outV.push(sum)}if(outT.at(-1)!==times.at(-1)){outS.push(scores.at(-1));outT.push(times.at(-1));outV.push(sold.at(-1))}return{scores:outS,sold:outV,times:outT}}
 async function fetchHistoryDay(dateStr){try{return await getJSON(`./public/data/history/${dateStr}.json`)}catch{return null}}
@@ -76,8 +79,8 @@ return snapshots}
 const rangeCache={};
 function getRangeSnapshots(maxDays,key){if(!rangeCache[key])rangeCache[key]=loadHistoryRange(maxDays);return rangeCache[key]}
 async function renderTrendChart(rangeKey){const days=rangeKey==='7d'?7:rangeKey==='30d'?30:400;const snaps=await getRangeSnapshots(days,rangeKey);const points=snaps.map(s=>({score:clampScore(s.global?.score),liters:Number(s.global?.totalLiters||0),time:s.scrapedAt}));if(latest&&(!points.length||new Date(latest.scrapedAt)>new Date(points.at(-1).time)))points.push({score:clampScore(latest.global.score),liters:Number(latest.global.totalLiters||0),time:latest.scrapedAt});
-const rawScores=points.map(p=>p.score),rawTimes=points.map(p=>p.time),rawLiters=points.map(p=>p.liters),rawSold=rawLiters.map((v,i)=>i===0?0:Math.max(0,rawLiters[i-1]-v));
-const{scores,sold,times}=downsampleWithVolume(rawScores,rawSold,rawTimes,180);
+const rawScores=points.map(p=>p.score),rawTimes=points.map(p=>p.time),rawLiters=points.map(p=>p.liters),rawDelta=rawLiters.map((v,i)=>i===0?0:v-rawLiters[i-1]);
+const{scores,sold,times}=downsampleWithVolume(rawScores,rawDelta,rawTimes,180);
 drawZoneChart($('#trendChart'),scores,times,$('#trendChartDetail'),sold);
 if(scores.length<2){$('#trendDelta').textContent='—';return}const delta=scores.at(-1)-scores[0];$('#trendDelta').textContent=`${delta>=0?'+':''}${delta.toFixed(1)} pts`}
 async function fetchSaldosDay(dateStr){try{return await getJSON(`./public/data/saldos/${dateStr}.json`)}catch{return null}}

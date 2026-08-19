@@ -14,8 +14,9 @@
   --s-normal:#cdc07c;
   --s-abundancia:#86c99c;
   --s-saturado:#6fc2a6;
-  --volume:#54c8ea;
-  --volume-dim:rgba(84,200,234,.32);
+  --volume:#6f6a7d;
+  --volume-in:#5ecb8f;
+  --volume-out:#e2807a;
   --font-mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
   --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
   --radius:6px;
@@ -70,7 +71,8 @@ h2{margin:4px 0 0;font-size:1rem;font-weight:600;letter-spacing:-.01em}
 .legend-item{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.7rem;color:var(--muted)}
 .legend-dot{width:8px;height:8px;border-radius:50%;flex:none}
 .legend-dot.dot-index{background:linear-gradient(90deg,var(--s-critico),var(--s-escasez),var(--s-normal),var(--s-abundancia),var(--s-saturado))}
-.legend-dot.dot-volume{background:var(--volume)}
+.legend-dot.dot-volume-in{background:var(--volume-in)}
+.legend-dot.dot-volume-out{background:var(--volume-out)}
 
 .chart-wrap{height:360px;margin-top:22px}
 #trendChart,#stationChart{width:100%;height:100%;overflow:visible}
