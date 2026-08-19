@@ -120,17 +120,35 @@ function toRawMeasurement(record: SaldoRecordOnDisk, addressByStation: Map<strin
   };
 }
 
-/** Groups all records across every saldos file by their sourceMeasuredAt instant, in chronological order. */
-function groupSnapshots(files: SaldosFileOnDisk[]): Map<string, SaldoRecordOnDisk[]> {
-  const groups = new Map<string, SaldoRecordOnDisk[]>();
+/**
+ * Groups all records across every saldos file by their sourceMeasuredAt
+ * instant, in chronological order. Deduplicates by (sourceMeasuredAt,
+ * station): a handful of historical snapshots were written twice by the old
+ * workflow (BioCloud hadn't updated between two 30-min runs, but both still
+ * appended a record) — without this, a station present twice in the same
+ * snapshot would get counted twice in totalLiters and every derived score.
+ * Keeps the record with the latest `scrapedAt` for that pair.
+ */
+export function groupSnapshots(files: SaldosFileOnDisk[]): Map<string, SaldoRecordOnDisk[]> {
+  const groups = new Map<string, Map<string, SaldoRecordOnDisk>>();
   for (const file of files) {
     for (const record of file.records) {
       const key = record.sourceMeasuredAt;
-      const group = groups.get(key);
-      if (group) group.push(record);
-      else groups.set(key, [record]);
+      let byStation = groups.get(key);
+      if (!byStation) {
+        byStation = new Map();
+        groups.set(key, byStation);
+      }
+      const existing = byStation.get(record.station);
+      if (!existing || record.scrapedAt >= existing.scrapedAt) byStation.set(record.station, record);
     }
   }
+  const deduped = new Map<string, SaldoRecordOnDisk[]>();
+  for (const [key, byStation] of groups) deduped.set(key, [...byStation.values()]);
+  return finalizeGroups(deduped);
+}
+
+function finalizeGroups(groups: Map<string, SaldoRecordOnDisk[]>): Map<string, SaldoRecordOnDisk[]> {
   return new Map([...groups.entries()].sort(([a], [b]) => a.localeCompare(b)));
 }
 
@@ -236,7 +254,9 @@ async function main() {
   console.log('Done.');
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exitCode = 1;
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  });
+}
