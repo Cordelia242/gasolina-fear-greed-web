@@ -8,6 +8,7 @@ import {
   VOLUME_OUT_COLOR,
   ZONE_DIVIDER_COLOR,
   clampScore,
+  compactLiters,
   downsampleWithVolume,
   pressureModeLabel,
   pressureStateLabel,
@@ -17,6 +18,8 @@ import {
 import type { Snapshot } from '../types';
 
 const fmt = new Intl.NumberFormat('es-BO');
+const AXIS_TICK = { fill: '#8f8a9c', fontSize: 9 };
+const compactTick = (v: number) => compactLiters(v).replace(' L', '');
 
 type SeriesKey = 'index' | 'balance' | 'volume';
 const SERIES_KEYS: SeriesKey[] = ['index', 'balance', 'volume'];
@@ -108,20 +111,50 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
           <p className="chart-empty">Aún no hay suficiente histórico</p>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 10, right: 40, left: 0, bottom: 0 }} barCategoryGap="8%">
-              <ReferenceArea yAxisId="score" y1={80} y2={100} fill={PRESSURE_STATE_COLORS.PRESION_EXTREMA} fillOpacity={0.1} />
-              <ReferenceArea yAxisId="score" y1={0} y2={20} fill={PRESSURE_STATE_COLORS.SIN_PRESION} fillOpacity={0.1} />
-              {[20, 40, 60, 80].map((y) => (
-                <ReferenceLine key={y} yAxisId="score" y={y} stroke={ZONE_DIVIDER_COLOR} strokeDasharray="2 4" />
+            <ComposedChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }} barCategoryGap="8%">
+              <ReferenceArea yAxisId="score" y1={80} y2={100} fill={PRESSURE_STATE_COLORS.PRESION_EXTREMA} fillOpacity={0.15} />
+              <ReferenceArea yAxisId="score" y1={0} y2={20} fill={PRESSURE_STATE_COLORS.SIN_PRESION} fillOpacity={0.15} />
+              {[0, 20, 40, 60, 80, 100].map((y) => (
+                <ReferenceLine key={y} yAxisId="score" y={y} stroke={ZONE_DIVIDER_COLOR} strokeDasharray="1 5" strokeLinecap="round" />
               ))}
               <XAxis
                 dataKey="time"
                 tickFormatter={(t) => new Intl.DateTimeFormat('es-BO', { day: '2-digit', month: 'short' }).format(new Date(t))}
-                stroke="#6f6a7d"
-                fontSize={9}
+                axisLine={false}
+                tickLine={false}
+                tick={AXIS_TICK}
               />
-              <YAxis yAxisId="score" domain={[0, 100]} hide />
-              <YAxis yAxisId="liters" orientation="right" hide domain={['dataMin', 'dataMax']} />
+              <YAxis
+                yAxisId="liters"
+                orientation="left"
+                domain={['dataMin', 'dataMax']}
+                tickFormatter={compactTick}
+                axisLine={false}
+                tickLine={false}
+                tick={AXIS_TICK}
+                width={44}
+              />
+              <YAxis
+                yAxisId="score"
+                orientation="right"
+                domain={[0, 100]}
+                ticks={[0, 20, 40, 60, 80, 100]}
+                axisLine={false}
+                tickLine={false}
+                tick={AXIS_TICK}
+                width={26}
+              />
+              <YAxis
+                yAxisId="scoreState"
+                orientation="right"
+                domain={[0, 100]}
+                ticks={[10, 30, 50, 70, 90]}
+                tickFormatter={(v) => pressureStateLabel(scoreToState(v))}
+                axisLine={false}
+                tickLine={false}
+                tick={AXIS_TICK}
+                width={86}
+              />
               {/* dominio escalado a VOLUME_ZONE_FRACTION del alto: las barras (siempre positivas, en absSold)
                   quedan confinadas a una franja abajo del gráfico en vez de ocupar todo el alto */}
               <YAxis yAxisId="volume" hide domain={[0, (max: number) => (max > 0 ? max / VOLUME_ZONE_FRACTION : 1)]} />
@@ -150,6 +183,12 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
               )}
             </ComposedChart>
           </ResponsiveContainer>
+        )}
+        {chartData.length >= 2 && (
+          <>
+            <span className="axis-unit axis-unit-left">L</span>
+            <span className="axis-unit axis-unit-right">IDX</span>
+          </>
         )}
       </div>
     </article>
