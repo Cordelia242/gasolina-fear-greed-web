@@ -1,0 +1,40 @@
+name: Fix history without pressure
+
+on:
+  push:
+    branches:
+      - agent/show-history-without-pressure
+    paths:
+      - 'scripts/fix-history-without-pressure.js'
+      - '.github/workflows/fix-history-without-pressure.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/show-history-without-pressure
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Aplicar fix
+        run: node scripts/fix-history-without-pressure.js
+      - name: Validar sintaxis
+        run: node --check app.js
+      - name: Ejecutar pruebas
+        run: node --test scripts/schema-contract.test.js
+      - name: Guardar corrección
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js
+          if git diff --cached --quiet; then
+            echo "No hay cambios para guardar"
+          else
+            git commit -m "fix: mostrar saldo y volumen sin baseline de presión"
+            git push
+          fi
