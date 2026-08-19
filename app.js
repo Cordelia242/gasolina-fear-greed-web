@@ -77,6 +77,6 @@ let currentChartRange='7d';
 document.addEventListener('click',e=>{const cr=e.target.closest('#chartRangeButtons .filter');if(cr){document.querySelectorAll('#chartRangeButtons .filter').forEach(x=>x.classList.remove('active'));cr.classList.add('active');currentChartRange=cr.dataset.range;renderTrendChart(currentChartRange);return}const r=e.target.closest('.range-filters .filter');if(r){document.querySelectorAll('.range-filters .filter').forEach(x=>x.classList.remove('active'));r.classList.add('active');currentRange=r.dataset.range;renderStationChart();return}const b=e.target.closest('.filters:not(.range-filters) .filter');if(b){document.querySelectorAll('.filters:not(.range-filters) .filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentFilter=b.dataset.filter;renderStations();return}const card=e.target.closest('.station[data-key]');if(card)openStationDialog(card.dataset.key)});
 $('#dialogClose').addEventListener('click',()=>$('#stationDialog').close());
 $('#stationDialog').addEventListener('click',e=>{if(e.target===$('#stationDialog'))$('#stationDialog').close()});
-let resizeTimer=null;
-window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(latest)renderTrendChart(currentChartRange)},200)});
+let chartResizeTimer=null;
+new ResizeObserver(()=>{clearTimeout(chartResizeTimer);chartResizeTimer=setTimeout(()=>{if(latest)renderTrendChart(currentChartRange)},120)}).observe($('#trendChart'));
 init();
