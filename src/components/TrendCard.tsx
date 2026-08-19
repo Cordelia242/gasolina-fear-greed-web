@@ -111,7 +111,7 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
           <p className="chart-empty">Aún no hay suficiente histórico</p>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }} barCategoryGap="8%">
+            <ComposedChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }} barCategoryGap="4%">
               <ReferenceArea yAxisId="score" y1={80} y2={100} fill={PRESSURE_STATE_COLORS.PRESION_EXTREMA} fillOpacity={0.15} />
               <ReferenceArea yAxisId="score" y1={0} y2={20} fill={PRESSURE_STATE_COLORS.SIN_PRESION} fillOpacity={0.15} />
               {[0, 20, 40, 60, 80, 100].map((y) => (

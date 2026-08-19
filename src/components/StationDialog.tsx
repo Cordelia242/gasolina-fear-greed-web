@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Line, LineChart, ResponsiveContainer } from 'recharts';
 import { fuelScoreColor, fuelStateLabel, pressureModeLabel, pressureStateLabel } from '../lib/pressureMath';
 import { stationRecordsInRange } from '../hooks/useSaldosRecords';
+import { FuelAreaChart } from './FuelAreaChart';
 import type { SaldoRecord, Station } from '../types';
 
 const fmt = new Intl.NumberFormat('es-BO');
@@ -29,7 +29,7 @@ export function StationDialog({ station, saldosRecords, onClose }: { station: St
   const fuel = station.fuelLevel || { score: 0, state: 'CRITICO' as const };
   const pressure = station.pressure || { score: null, state: 'BASELINE_BUILDING' as const };
   const records = stationRecordsInRange(saldosRecords, station.key, RANGE_HOURS[range]);
-  const chartData = records.map((r) => ({ liters: Number(r.liters || 0) }));
+  const chartData = records.map((r) => ({ time: r.scrapedAt, liters: Number(r.liters || 0) }));
 
   return (
     <dialog className="station-dialog" ref={ref} onClose={onClose} onClick={(e) => e.target === ref.current && onClose()}>
@@ -73,11 +73,7 @@ export function StationDialog({ station, saldosRecords, onClose }: { station: St
         {chartData.length < 2 ? (
           <p className="chart-empty">Aún no hay suficiente histórico</p>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <Line type="monotone" dataKey="liters" stroke={fuelScoreColor(fuel.score)} strokeWidth={2} dot={false} isAnimationActive={false} />
-            </LineChart>
-          </ResponsiveContainer>
+          <FuelAreaChart data={chartData} color={fuelScoreColor(fuel.score)} showTooltip />
         )}
       </div>
     </dialog>

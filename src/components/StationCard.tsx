@@ -1,6 +1,6 @@
-import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import { fuelScoreColor, fuelStateLabel } from '../lib/pressureMath';
 import { stationRecordsInRange } from '../hooks/useSaldosRecords';
+import { FuelAreaChart } from './FuelAreaChart';
 import type { SaldoRecord, Station } from '../types';
 
 const fmt = new Intl.NumberFormat('es-BO');
@@ -20,7 +20,7 @@ export function StationCard({ station, saldosRecords, onOpen }: { station: Stati
   const fuel = station.fuelLevel || { score: 0, state: 'CRITICO' as const };
   const color = fuelScoreColor(fuel.score);
   const sparkRecords = stationRecordsInRange(saldosRecords, station.key, STATION_CHART_HOURS);
-  const sparkData = sparkRecords.map((r) => ({ liters: Number(r.liters || 0) }));
+  const sparkData = sparkRecords.map((r) => ({ time: r.scrapedAt, liters: Number(r.liters || 0) }));
   const consumeRecords = stationRecordsInRange(saldosRecords, station.key, 1);
 
   return (
@@ -42,11 +42,7 @@ export function StationCard({ station, saldosRecords, onOpen }: { station: Stati
         {sparkData.length < 2 ? (
           <p className="chart-empty-mini">Sin histórico de 5h</p>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={sparkData} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
-              <Area type="monotone" dataKey="liters" stroke={color} fill={color} fillOpacity={0.14} strokeWidth={2} isAnimationActive={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <FuelAreaChart data={sparkData} color={color} />
         )}
       </div>
       <div className="station-meta">
