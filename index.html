@@ -22,10 +22,10 @@
 
     <section class="hero-stack">
       <article class="card gauge-card">
-        <span class="label">ÍNDICE GLOBAL</span>
+        <span class="label">ÍNDICE DE PRESIÓN</span>
         <div class="gauge-row">
           <div class="gauge-wrap">
-            <svg class="gauge" id="gaugeSvg" viewBox="0 0 200 112" aria-label="Medidor del índice global"></svg>
+            <svg class="gauge" id="gaugeSvg" viewBox="0 0 200 112" aria-label="Medidor del índice de presión"></svg>
             <div class="gauge-value">
               <strong id="globalScore">--</strong>
               <span id="globalState">—</span>
@@ -41,7 +41,7 @@
 
       <article class="card trend-card">
         <div class="card-title-row">
-          <div><span class="label">EVOLUCIÓN</span><h2>Gráfico del índice <span class="mini-badge" id="trendDelta">—</span></h2></div>
+          <div><span class="label">EVOLUCIÓN</span><h2>Gráfico de presión <span class="mini-badge" id="trendDelta">—</span></h2></div>
           <div class="chart-ranges" id="chartRangeButtons">
             <button class="filter active" data-range="7d" type="button">7d</button>
             <button class="filter" data-range="30d" type="button">30d</button>
@@ -49,7 +49,7 @@
           </div>
         </div>
         <div class="chart-legend" id="chartLegend">
-          <button class="legend-item active" data-series="index" type="button" aria-pressed="true"><span class="legend-dot dot-index"></span>Índice de escasez</button>
+          <button class="legend-item active" data-series="index" type="button" aria-pressed="true"><span class="legend-dot dot-index"></span>Índice de presión</button>
           <button class="legend-item active" data-series="balance" type="button" aria-pressed="true"><span class="legend-dot dot-balance"></span>Saldo total (litros)</button>
           <button class="legend-item active" data-series="volume" type="button" aria-pressed="true"><span class="legend-dot dot-volume"></span>Volumen (litros)</button>
         </div>
@@ -75,6 +75,8 @@
       </div>
       <dl class="props">
         <div class="prop"><dt>Litros actuales</dt><dd id="dialogLiters">—</dd></div>
+        <div class="prop"><dt>Nivel de combustible</dt><dd id="dialogFuelLevel">—</dd></div>
+        <div class="prop"><dt>Índice de presión</dt><dd id="dialogPressure">—</dd></div>
       </dl>
       <div class="filters range-filters"><button class="filter active" data-range="5h">5 horas</button><button class="filter" data-range="10h">10 horas</button><button class="filter" data-range="1d">1 día</button></div>
       <div class="chart-wrap"><svg id="stationChart" viewBox="0 0 600 220" preserveAspectRatio="none" aria-label="Litros en el tiempo"></svg></div>
