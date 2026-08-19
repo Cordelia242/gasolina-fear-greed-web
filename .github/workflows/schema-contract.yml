@@ -1,0 +1,27 @@
+name: Schema contract
+
+on:
+  push:
+    branches:
+      - agent/separate-fuel-level-pressure
+    paths:
+      - 'scripts/schema-contract.test.js'
+      - '.github/workflows/schema-contract.yml'
+      - 'app.js'
+      - 'index.html'
+      - 'gasolina-fear-greed-workflow(1).json'
+      - 'public/data/latest.json'
+      - 'public/data/history/**'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test scripts/schema-contract.test.js
