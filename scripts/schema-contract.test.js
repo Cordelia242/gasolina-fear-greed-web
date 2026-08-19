@@ -40,6 +40,13 @@ test('la UI usa nivel de combustible en tarjetas y presión en el índice', () =
   assert.match(html, /Nivel de combustible/i);
 });
 
+test('el gráfico conserva saldo y volumen aunque pressure.score sea null', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  assert.doesNotMatch(app, /const pressurePoints=points\.filter\(p=>Number\.isFinite\(p\.score\)\)/);
+  assert.match(app, /const pointCount=Math\.max\(/);
+  assert.match(app, /rawScores=points\.map\(p=>p\.score\)/);
+});
+
 test('el workflow genera fuelLevel y pressure explícitos', () => {
   const workflow = readJson('gasolina-fear-greed-workflow(1).json');
   const node = workflow.nodes.find(n => n.name === 'Construir datos e indices');
