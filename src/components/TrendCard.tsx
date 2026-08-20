@@ -36,18 +36,24 @@ const RANGE_LABEL: Record<ChartRange, string> = { '7d': '7d', '30d': '30d', all:
 // Las barras de volumen ocupan solo esta fracción del alto del gráfico, pegadas abajo.
 const VOLUME_ZONE_FRACTION = 0.22;
 
-function buildPoints(snapshots: Snapshot[], latest: Snapshot | null) {
-  const points = snapshots.map((s) => ({
+function pointFor(s: Snapshot) {
+  return {
     score: Number.isFinite(s.global?.pressure?.score) ? clampScore(s.global.pressure.score) : null,
     liters: Number(s.global?.inventory?.totalLiters || 0),
+    outflowLitersPerHour: Number.isFinite(s.global?.flow?.outflowLitersPerHour)
+      ? (s.global!.flow!.outflowLitersPerHour as number)
+      : null,
+    inflowLitersPerHour: Number.isFinite(s.global?.flow?.inflowLitersPerHour)
+      ? (s.global!.flow!.inflowLitersPerHour as number)
+      : null,
     time: s.scrapedAt,
-  }));
+  };
+}
+
+function buildPoints(snapshots: Snapshot[], latest: Snapshot | null) {
+  const points = snapshots.map(pointFor);
   if (latest && (!points.length || new Date(latest.scrapedAt) > new Date(points.at(-1)!.time))) {
-    points.push({
-      score: Number.isFinite(latest.global?.pressure?.score) ? clampScore(latest.global.pressure.score) : null,
-      liters: Number(latest.global?.inventory?.totalLiters || 0),
-      time: latest.scrapedAt,
-    });
+    points.push(pointFor(latest));
   }
   return points;
 }
@@ -63,8 +69,35 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
     const rawTimes = points.map((p) => p.time);
     const rawLiters = points.map((p) => p.liters);
     const rawDelta = rawLiters.map((v, i) => (i === 0 ? 0 : v - rawLiters[i - 1]));
-    const { scores, sold, liters, times } = downsampleWithVolume(rawScores, rawDelta, rawLiters, rawTimes, 180);
-    return times.map((time, i) => ({ time, score: scores[i], sold: sold[i], absSold: Math.abs(sold[i]), liters: liters[i] }));
+    // Volumen real de egresos/ingresos de ESE intervalo (tasa * horas transcurridas),
+    // no derivado del neto — así conservan lo que pasó aunque se compensen entre sí.
+    const elapsedHoursAt = (i: number) =>
+      i === 0 ? 0 : (new Date(rawTimes[i]).getTime() - new Date(rawTimes[i - 1]).getTime()) / 3_600_000;
+    const rawOut = points.map((p, i) => {
+      const hours = elapsedHoursAt(i);
+      return hours > 0 && p.outflowLitersPerHour !== null ? p.outflowLitersPerHour * hours : 0;
+    });
+    const rawIn = points.map((p, i) => {
+      const hours = elapsedHoursAt(i);
+      return hours > 0 && p.inflowLitersPerHour !== null ? p.inflowLitersPerHour * hours : 0;
+    });
+    const { scores, sold, liters, times, soldOut, soldIn } = downsampleWithVolume(
+      rawScores,
+      rawDelta,
+      rawLiters,
+      rawTimes,
+      180,
+      rawOut,
+      rawIn
+    );
+    return times.map((time, i) => ({
+      time,
+      score: scores[i],
+      sold: sold[i],
+      liters: liters[i],
+      soldOut: soldOut?.[i] ?? 0,
+      soldIn: soldIn?.[i] ?? 0,
+    }));
   }, [snapshots, latest]);
 
   const pressureScores = chartData.map((d) => d.score).filter((v): v is number => Number.isFinite(v));
@@ -161,9 +194,9 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
               <YAxis yAxisId="volume" hide domain={[0, (max: number) => (max > 0 ? max / VOLUME_ZONE_FRACTION : 1)]} />
               <Tooltip content={<TrendTooltip series={series} />} />
               {(series.volumeIn || series.volumeOut) && (
-                <Bar yAxisId="volume" dataKey={(d: TrendPoint) => filteredVolume(d.sold, series)} isAnimationActive={false}>
+                <Bar yAxisId="volume" dataKey={(d: TrendPoint) => filteredVolume(d, series)} isAnimationActive={false}>
                   {chartData.map((d, i) => (
-                    <Cell key={i} fill={d.sold >= 0 ? VOLUME_IN_COLOR : VOLUME_OUT_COLOR} />
+                    <Cell key={i} fill={volumeColor(d, series)} />
                   ))}
                 </Bar>
               )}
@@ -201,15 +234,29 @@ interface TrendPoint {
   score: number | null;
   liters: number;
   sold: number;
+  soldOut: number;
+  soldIn: number;
 }
 
-// Con ambos filtros activos se muestra el movimiento neto (como antes); con uno solo,
-// se ocultan las barras del signo contrario en vez de sumarlas.
-function filteredVolume(sold: number, series: Record<SeriesKey, boolean>) {
-  if (series.volumeIn && series.volumeOut) return Math.abs(sold);
-  if (series.volumeIn) return sold > 0 ? sold : 0;
-  if (series.volumeOut) return sold < 0 ? Math.abs(sold) : 0;
+// Con ambos filtros activos se muestra el movimiento neto (como antes). Con uno solo
+// activo, se usa el volumen real de ese lado (soldOut/soldIn) en vez de derivarlo del
+// neto: un intervalo con ingresos y egresos simultáneos no debe mostrar "0" en egresos
+// solo porque el ingreso fue mayor y compensó el neto.
+function filteredVolume(d: TrendPoint, series: Record<SeriesKey, boolean>) {
+  if (series.volumeIn && series.volumeOut) return Math.abs(d.sold);
+  if (series.volumeIn) return d.soldIn;
+  if (series.volumeOut) return d.soldOut;
   return 0;
+}
+
+function isOutflowDisplay(d: TrendPoint, series: Record<SeriesKey, boolean>): boolean {
+  if (series.volumeOut && !series.volumeIn) return true;
+  if (series.volumeIn && !series.volumeOut) return false;
+  return d.sold < 0;
+}
+
+function volumeColor(d: TrendPoint, series: Record<SeriesKey, boolean>) {
+  return isOutflowDisplay(d, series) ? VOLUME_OUT_COLOR : VOLUME_IN_COLOR;
 }
 
 function TrendTooltip({ active, payload, series }: { active?: boolean; payload?: Array<{ payload: TrendPoint }>; series: Record<SeriesKey, boolean> }) {
@@ -241,13 +288,13 @@ function TrendTooltip({ active, payload, series }: { active?: boolean; payload?:
         )}
         {(series.volumeIn || series.volumeOut) && (
           <li>
-            <span className="tooltip-dot" style={{ background: d.sold >= 0 ? VOLUME_IN_COLOR : VOLUME_OUT_COLOR }} />
+            <span className="tooltip-dot" style={{ background: volumeColor(d, series) }} />
             <span className="tooltip-label">Volumen</span>
             <strong>
               {(() => {
-                const v = filteredVolume(d.sold, series);
+                const v = filteredVolume(d, series);
                 if (v === 0) return '0 L';
-                return d.sold >= 0 ? `+${fmt.format(Math.round(v))} L` : `-${fmt.format(Math.round(v))} L`;
+                return isOutflowDisplay(d, series) ? `-${fmt.format(Math.round(v))} L` : `+${fmt.format(Math.round(v))} L`;
               })()}
             </strong>
           </li>

@@ -33,6 +33,26 @@ describe('downsampleWithVolume', () => {
     expect(result.times).toEqual(['a', 'd', 'e']);
     expect(result.sold).toEqual([30, 20, 10]);
   });
+
+  test('regression: soldOut/soldIn stay separate even when a bucket nets to the opposite sign', () => {
+    // Same point/bucket shape as the test above (5 points, max 2 -> buckets
+    // [a,b,c] and [d,e], plus e kept as its own trailing point).
+    // Bucket [a,b,c]: outflow 100+100+0=200, inflow 5+0+0=5 -> net would be -195 (outflow).
+    // Bucket [d,e]: outflow 0+10=10, inflow 300+0=300 -> net would be +290 (inflow).
+    // Before the fix, "solo egresos" derived its value from the net's sign, so the
+    // second bucket (net inflow) showed 0 egresos even though 10L actually went out
+    // there — exactly the reported bug. soldOut/soldIn must ignore the net entirely.
+    const scores = [1, 2, 3, 4, 5];
+    const liters = [100, 5, 5, 5, 295];
+    const times = ['a', 'b', 'c', 'd', 'e'];
+    const sold = [0, -95, 0, 0, 290]; // net per point, irrelevant to this test
+    const soldOutIn = [100, 100, 0, 0, 10];
+    const soldInIn = [5, 0, 0, 300, 0];
+    const result = downsampleWithVolume(scores, sold, liters, times, 2, soldOutIn, soldInIn);
+    expect(result.times).toEqual(['a', 'd', 'e']);
+    expect(result.soldOut).toEqual([200, 10, 10]);
+    expect(result.soldIn).toEqual([5, 300, 0]);
+  });
 });
 
 describe('labels', () => {

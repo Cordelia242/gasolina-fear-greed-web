@@ -25,9 +25,16 @@ export interface Inventory {
   stationsTotal: number;
 }
 
+export interface Flow {
+  outflowLitersPerHour: number;
+  inflowLitersPerHour: number;
+  netFlowLitersPerHour: number;
+}
+
 export interface Global {
   inventory: Inventory;
   pressure: Pressure;
+  flow?: Flow;
 }
 
 export interface Station {

@@ -85,35 +85,57 @@ export interface DownsampledSeries {
   sold: number[];
   liters: number[];
   times: string[];
+  /** Present only when `soldOut`/`soldIn` were passed in — true outflow/inflow volume per bucket, not derived from the net. */
+  soldOut?: number[];
+  soldIn?: number[];
 }
 
+/**
+ * `sold` is the NET liters moved per point (already summed when bucketing
+ * points together for display). `soldOut`/`soldIn`, when provided, are
+ * summed the same way but kept SEPARATE — outflow and inflow that happened
+ * in the same bucket don't cancel out. Without this, filtering the chart to
+ * "only egresos" on a bucket whose net was positive (net inflow) would show
+ * nothing, hiding real outflow that got netted away.
+ */
 export function downsampleWithVolume(
   scores: (number | null)[],
   sold: number[],
   liters: number[],
   times: string[],
-  max: number
+  max: number,
+  soldOut?: number[],
+  soldIn?: number[]
 ): DownsampledSeries {
-  if (scores.length <= max) return { scores, sold, liters, times };
+  if (scores.length <= max) return { scores, sold, liters, times, soldOut, soldIn };
   const stride = Math.ceil(scores.length / max);
   const outS: (number | null)[] = [];
   const outV: number[] = [];
   const outL: number[] = [];
   const outT: string[] = [];
+  const outOut: number[] | undefined = soldOut ? [] : undefined;
+  const outIn: number[] | undefined = soldIn ? [] : undefined;
+  const sumRange = (arr: number[], from: number, to: number) => {
+    let sum = 0;
+    for (let j = from; j < to; j++) sum += arr[j];
+    return sum;
+  };
   for (let i = 0; i < scores.length; i += stride) {
     const end = Math.min(i + stride, scores.length);
     outS.push(scores[i]);
     outT.push(times[i]);
     outL.push(liters[i]);
-    let sum = 0;
-    for (let j = i; j < end; j++) sum += sold[j];
-    outV.push(sum);
+    outV.push(sumRange(sold, i, end));
+    if (soldOut && outOut) outOut.push(sumRange(soldOut, i, end));
+    if (soldIn && outIn) outIn.push(sumRange(soldIn, i, end));
   }
   if (outT.at(-1) !== times.at(-1)) {
     outS.push(scores.at(-1) ?? null);
     outT.push(times.at(-1)!);
     outV.push(sold.at(-1) ?? 0);
     outL.push(liters.at(-1) ?? 0);
+    if (soldOut && outOut) outOut.push(soldOut.at(-1) ?? 0);
+    if (soldIn && outIn) outIn.push(soldIn.at(-1) ?? 0);
   }
-  return { scores: outS, sold: outV, liters: outL, times: outT };
+  return { scores: outS, sold: outV, liters: outL, times: outT, soldOut: outOut, soldIn: outIn };
 }
