@@ -21,12 +21,13 @@ const fmt = new Intl.NumberFormat('es-BO');
 const AXIS_TICK = { fill: '#8f8a9c', fontSize: 9 };
 const compactTick = (v: number) => compactLiters(v).replace(' L', '');
 
-type SeriesKey = 'index' | 'balance' | 'volume';
-const SERIES_KEYS: SeriesKey[] = ['index', 'balance', 'volume'];
+type SeriesKey = 'index' | 'balance' | 'volumeIn' | 'volumeOut';
+const SERIES_KEYS: SeriesKey[] = ['index', 'balance', 'volumeIn', 'volumeOut'];
 const SERIES_LABEL: Record<SeriesKey, string> = {
   index: 'Índice de presión',
   balance: 'Saldo total (litros)',
-  volume: 'Volumen (litros)',
+  volumeIn: 'Ingresos (litros)',
+  volumeOut: 'Egresos (litros)',
 };
 
 const RANGES: ChartRange[] = ['7d', '30d', 'all'];
@@ -53,7 +54,7 @@ function buildPoints(snapshots: Snapshot[], latest: Snapshot | null) {
 
 export function TrendCard({ latest }: { latest: Snapshot | null }) {
   const [range, setRange] = useState<ChartRange>('7d');
-  const [series, setSeries] = useState<Record<SeriesKey, boolean>>({ index: true, balance: true, volume: true });
+  const [series, setSeries] = useState<Record<SeriesKey, boolean>>({ index: true, balance: true, volumeIn: true, volumeOut: true });
   const { snapshots } = useHistory(range);
 
   const chartData = useMemo(() => {
@@ -159,8 +160,8 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
                   quedan confinadas a una franja abajo del gráfico en vez de ocupar todo el alto */}
               <YAxis yAxisId="volume" hide domain={[0, (max: number) => (max > 0 ? max / VOLUME_ZONE_FRACTION : 1)]} />
               <Tooltip content={<TrendTooltip series={series} />} />
-              {series.volume && (
-                <Bar yAxisId="volume" dataKey="absSold" isAnimationActive={false}>
+              {(series.volumeIn || series.volumeOut) && (
+                <Bar yAxisId="volume" dataKey={(d: TrendPoint) => filteredVolume(d.sold, series)} isAnimationActive={false}>
                   {chartData.map((d, i) => (
                     <Cell key={i} fill={d.sold >= 0 ? VOLUME_IN_COLOR : VOLUME_OUT_COLOR} />
                   ))}
@@ -202,6 +203,15 @@ interface TrendPoint {
   sold: number;
 }
 
+// Con ambos filtros activos se muestra el movimiento neto (como antes); con uno solo,
+// se ocultan las barras del signo contrario en vez de sumarlas.
+function filteredVolume(sold: number, series: Record<SeriesKey, boolean>) {
+  if (series.volumeIn && series.volumeOut) return Math.abs(sold);
+  if (series.volumeIn) return sold > 0 ? sold : 0;
+  if (series.volumeOut) return sold < 0 ? Math.abs(sold) : 0;
+  return 0;
+}
+
 function TrendTooltip({ active, payload, series }: { active?: boolean; payload?: Array<{ payload: TrendPoint }>; series: Record<SeriesKey, boolean> }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
@@ -229,11 +239,17 @@ function TrendTooltip({ active, payload, series }: { active?: boolean; payload?:
             <strong>{fmt.format(Math.round(d.liters))} L</strong>
           </li>
         )}
-        {series.volume && (
+        {(series.volumeIn || series.volumeOut) && (
           <li>
             <span className="tooltip-dot" style={{ background: d.sold >= 0 ? VOLUME_IN_COLOR : VOLUME_OUT_COLOR }} />
             <span className="tooltip-label">Volumen</span>
-            <strong>{d.sold > 0 ? `+${fmt.format(Math.round(d.sold))} L` : d.sold < 0 ? `-${fmt.format(Math.round(Math.abs(d.sold)))} L` : '0 L'}</strong>
+            <strong>
+              {(() => {
+                const v = filteredVolume(d.sold, series);
+                if (v === 0) return '0 L';
+                return d.sold >= 0 ? `+${fmt.format(Math.round(v))} L` : `-${fmt.format(Math.round(v))} L`;
+              })()}
+            </strong>
           </li>
         )}
       </ul>
