@@ -15,6 +15,7 @@ import {
   scoreColor,
   scoreToState,
 } from '../lib/pressureMath';
+import { filterSantaCruzStations } from '../lib/stationFilter';
 import type { Snapshot } from '../types';
 
 const fmt = new Intl.NumberFormat('es-BO');
@@ -36,16 +37,31 @@ const RANGE_LABEL: Record<ChartRange, string> = { '7d': '7d', '30d': '30d', all:
 // Las barras de volumen ocupan solo esta fracción del alto del gráfico, pegadas abajo.
 const VOLUME_ZONE_FRACTION = 0.22;
 
-function pointFor(s: Snapshot) {
+// El saldo/volumen del gráfico se recalcula sobre las estaciones de Santa Cruz
+// visibles (sumando su liters/flow, igual que hace el motor a nivel global),
+// en vez de usar los totales oficiales de s.global (que cubren TODAS las
+// estaciones). El índice de presión (score) sí queda como el oficial: no se
+// puede resumir a partir de las estaciones sin duplicar la fórmula del motor.
+export function pointFor(s: Snapshot) {
+  const stations = s.stations ? filterSantaCruzStations(s.stations) : null;
+  const liters = stations
+    ? stations.reduce((sum, st) => sum + (Number(st.liters) || 0), 0)
+    : Number(s.global?.inventory?.totalLiters || 0);
+  const outflowLitersPerHour = stations
+    ? stations.reduce((sum, st) => sum + (Number(st.flow?.outflowLitersPerHour) || 0), 0)
+    : Number.isFinite(s.global?.flow?.outflowLitersPerHour)
+      ? (s.global!.flow!.outflowLitersPerHour as number)
+      : null;
+  const inflowLitersPerHour = stations
+    ? stations.reduce((sum, st) => sum + (Number(st.flow?.inflowLitersPerHour) || 0), 0)
+    : Number.isFinite(s.global?.flow?.inflowLitersPerHour)
+      ? (s.global!.flow!.inflowLitersPerHour as number)
+      : null;
   return {
     score: Number.isFinite(s.global?.pressure?.score) ? clampScore(s.global.pressure.score) : null,
-    liters: Number(s.global?.inventory?.totalLiters || 0),
-    outflowLitersPerHour: Number.isFinite(s.global?.flow?.outflowLitersPerHour)
-      ? (s.global!.flow!.outflowLitersPerHour as number)
-      : null,
-    inflowLitersPerHour: Number.isFinite(s.global?.flow?.inflowLitersPerHour)
-      ? (s.global!.flow!.inflowLitersPerHour as number)
-      : null,
+    liters,
+    outflowLitersPerHour,
+    inflowLitersPerHour,
     time: s.scrapedAt,
   };
 }

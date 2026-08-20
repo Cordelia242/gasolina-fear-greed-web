@@ -45,6 +45,7 @@ export interface Station {
   visibleInSource?: boolean;
   fuelLevel: FuelLevel;
   pressure: Pressure;
+  flow?: Flow;
 }
 
 export interface Snapshot {
