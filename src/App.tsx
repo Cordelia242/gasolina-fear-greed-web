@@ -19,6 +19,7 @@ export function App() {
   // El índice de presión sigue siendo el oficial (calculado sobre todas las
   // estaciones); solo el inventario (litros/conteos) se recalcula sobre el
   // subconjunto visible, para que coincida con lo que se ve en pantalla.
+  // Mantener este archivo dentro del trigger de Pages permite redeploys explícitos.
   const filteredGlobal = latest?.global
     ? {
         ...latest.global,
