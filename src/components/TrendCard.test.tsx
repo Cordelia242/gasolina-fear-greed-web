@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { TrendCard, pointFor } from './TrendCard';
+import { TrendCard, dayBoundaryTimes, pointFor } from './TrendCard';
 import type { Snapshot } from '../types';
 
 const emptyLatest = {
@@ -33,6 +33,22 @@ describe('TrendCard', () => {
     expect(legendButton.closest('button')).toHaveClass('disabled');
 
     vi.unstubAllGlobals();
+  });
+});
+
+describe('dayBoundaryTimes', () => {
+  test('marks the first sample after Bolivia midnight while keeping the categorical timestamps', () => {
+    const times = [
+      '2026-08-24T03:58:00.000Z',
+      '2026-08-24T04:02:00.000Z',
+      '2026-08-24T05:00:00.000Z',
+      '2026-08-25T04:01:00.000Z',
+    ];
+
+    expect(dayBoundaryTimes(times)).toEqual([
+      '2026-08-24T04:02:00.000Z',
+      '2026-08-25T04:01:00.000Z',
+    ]);
   });
 });
 
