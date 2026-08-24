@@ -195,6 +195,7 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
                 <ReferenceLine
                   key={time}
                   x={time}
+                  yAxisId="score"
                   stroke={ZONE_DIVIDER_COLOR}
                   strokeDasharray="3 5"
                   strokeOpacity={0.7}
