@@ -1,6 +1,6 @@
 {
-  "scrapedAt": "2026-08-24T14:00:08.058Z",
-  "sourceMeasuredAt": "2026-08-24T09:46:00",
+  "scrapedAt": "2026-08-24T15:00:08.451Z",
+  "sourceMeasuredAt": "2026-08-24T10:46:00",
   "baseline": {
     "minimumCleanDays": 30,
     "windowDays": 90,
@@ -12,33 +12,33 @@
   },
   "global": {
     "inventory": {
-      "score": 4.15,
+      "score": 7.26,
       "state": "CRITICO",
-      "totalLiters": 19734,
+      "totalLiters": 34469,
       "stationsAvailable": 4,
       "stationsTotal": 19
     },
     "pressure": {
-      "score": 91.1,
-      "state": "PRESION_EXTREMA",
+      "score": 51.09,
+      "state": "EQUILIBRIO",
       "mode": "PROVISIONAL",
       "stationsReady": 0,
       "stationsTotal": 19,
       "requiredStationsForComplete": 10,
       "components": {
         "demandPressure": null,
-        "runwayPressure": 89.61,
-        "inventoryTrendPressure": 100,
-        "inventoryTrendPctPerHour": -16.62,
+        "runwayPressure": 89.57,
+        "inventoryTrendPressure": 0,
+        "inventoryTrendPctPerHour": 74.67,
         "stationsWithoutFuel": 15,
         "stationsWithoutFuelPressure": 78.95,
-        "flowBalancePressure": 100
+        "flowBalancePressure": 0
       }
     },
     "flow": {
-      "outflowLitersPerHour": 3576,
-      "inflowLitersPerHour": 0,
-      "netFlowLitersPerHour": -3576
+      "outflowLitersPerHour": 5065,
+      "inflowLitersPerHour": 19800,
+      "netFlowLitersPerHour": 14735
     }
   },
   "stations": [
@@ -57,7 +57,7 @@
         "litersPerHour": 0,
         "outflowLitersPerHour": 0,
         "inflowLitersPerHour": 0,
-        "recentOutflowLitersPerHour": 21.92,
+        "recentOutflowLitersPerHour": 14.25,
         "hoursToEmpty": 0
       },
       "pressure": {
@@ -88,7 +88,7 @@
         "litersPerHour": 0,
         "outflowLitersPerHour": 0,
         "inflowLitersPerHour": 0,
-        "recentOutflowLitersPerHour": 29.96,
+        "recentOutflowLitersPerHour": 19.47,
         "hoursToEmpty": 0
       },
       "pressure": {
@@ -170,19 +170,50 @@
       "key": "cedeno",
       "name": "CEDENO",
       "address": "CAMIRI - AV HUMBERTO SUAREZ ROCA, ZONA LA WILLAMS",
-      "liters": 5600,
+      "liters": 2800,
       "visibleInSource": true,
       "fuelLevel": {
-        "score": 22.4,
-        "state": "ESCASEZ"
+        "score": 11.2,
+        "state": "CRITICO"
       },
       "flow": {
-        "deltaLiters": 0,
-        "litersPerHour": 0,
-        "outflowLitersPerHour": 0,
+        "deltaLiters": -2800,
+        "litersPerHour": -2800,
+        "outflowLitersPerHour": 2800,
         "inflowLitersPerHour": 0,
+        "recentOutflowLitersPerHour": 980,
+        "hoursToEmpty": 2.86
+      },
+      "pressure": {
+        "score": 93.57,
+        "state": "PRESION_EXTREMA",
+        "mode": "PROVISIONAL",
+        "baselineReady": false,
+        "baselineCleanDays": 0,
+        "demandScore": null,
+        "demandRatio": null,
+        "expectedOutflowLitersPerHour": null,
+        "runwayPressure": 93.57
+      },
+      "inConfiguredCrisis": true
+    },
+    {
+      "key": "chaco",
+      "name": "CHACO",
+      "address": "AV. VIRGEN DE COTOCA, 2DO ANILLO",
+      "liters": 19800,
+      "visibleInSource": true,
+      "fuelLevel": {
+        "score": 79.2,
+        "state": "ABUNDANCIA"
+      },
+      "flow": {
+        "deltaLiters": 19800,
+        "litersPerHour": 19800,
+        "outflowLitersPerHour": 0,
+        "inflowLitersPerHour": 19800,
         "recentOutflowLitersPerHour": 0,
-        "hoursToEmpty": 1908046200.08
+        "hoursToEmpty": 28689341.23
       },
       "pressure": {
         "score": 0,
@@ -194,37 +225,6 @@
         "demandRatio": null,
         "expectedOutflowLitersPerHour": null,
         "runwayPressure": 0
-      },
-      "inConfiguredCrisis": true
-    },
-    {
-      "key": "chaco",
-      "name": "CHACO",
-      "address": "AV. VIRGEN DE COTOCA, 2DO ANILLO",
-      "liters": 0,
-      "visibleInSource": false,
-      "fuelLevel": {
-        "score": 0,
-        "state": "CRITICO"
-      },
-      "flow": {
-        "deltaLiters": 0,
-        "litersPerHour": 0,
-        "outflowLitersPerHour": 0,
-        "inflowLitersPerHour": 0,
-        "recentOutflowLitersPerHour": 0,
-        "hoursToEmpty": 0
-      },
-      "pressure": {
-        "score": 100,
-        "state": "PRESION_EXTREMA",
-        "mode": "PROVISIONAL",
-        "baselineReady": false,
-        "baselineCleanDays": 0,
-        "demandScore": null,
-        "demandRatio": null,
-        "expectedOutflowLitersPerHour": null,
-        "runwayPressure": 100
       },
       "inConfiguredCrisis": true
     },
@@ -243,7 +243,7 @@
         "litersPerHour": 0,
         "outflowLitersPerHour": 0,
         "inflowLitersPerHour": 0,
-        "recentOutflowLitersPerHour": 1282.06,
+        "recentOutflowLitersPerHour": 833.34,
         "hoursToEmpty": 0
       },
       "pressure": {
@@ -263,19 +263,19 @@
       "key": "gasco",
       "name": "GASCO",
       "address": "AV. BANZER 3ER ANILLO",
-      "liters": 167,
-      "visibleInSource": true,
+      "liters": 0,
+      "visibleInSource": false,
       "fuelLevel": {
-        "score": 0.67,
+        "score": 0,
         "state": "CRITICO"
       },
       "flow": {
-        "deltaLiters": -762,
-        "litersPerHour": -1524,
-        "outflowLitersPerHour": 1524,
+        "deltaLiters": -167,
+        "litersPerHour": -167,
+        "outflowLitersPerHour": 167,
         "inflowLitersPerHour": 0,
-        "recentOutflowLitersPerHour": 1684.55,
-        "hoursToEmpty": 0.1
+        "recentOutflowLitersPerHour": 1153.41,
+        "hoursToEmpty": 0
       },
       "pressure": {
         "score": 100,
@@ -480,22 +480,22 @@
       "key": "parapeti",
       "name": "PARAPETI",
       "address": "CAMIRI CARRETERA YACUIBA-SANTA CRUZ KM1 ZONA BARRIO LA WILLAMS",
-      "liters": 11348,
+      "liters": 10992,
       "visibleInSource": true,
       "fuelLevel": {
-        "score": 45.39,
+        "score": 43.97,
         "state": "NORMAL"
       },
       "flow": {
-        "deltaLiters": -145,
-        "litersPerHour": -290,
-        "outflowLitersPerHour": 290,
+        "deltaLiters": -356,
+        "litersPerHour": -356,
+        "outflowLitersPerHour": 356,
         "inflowLitersPerHour": 0,
-        "recentOutflowLitersPerHour": 252.53,
-        "hoursToEmpty": 44.94
+        "recentOutflowLitersPerHour": 288.74,
+        "hoursToEmpty": 38.07
       },
       "pressure": {
-        "score": 2.55,
+        "score": 8.28,
         "state": "SIN_PRESION",
         "mode": "PROVISIONAL",
         "baselineReady": false,
@@ -503,7 +503,7 @@
         "demandScore": null,
         "demandRatio": null,
         "expectedOutflowLitersPerHour": null,
-        "runwayPressure": 2.55
+        "runwayPressure": 8.28
       },
       "inConfiguredCrisis": true
     },
@@ -522,7 +522,7 @@
         "litersPerHour": 0,
         "outflowLitersPerHour": 0,
         "inflowLitersPerHour": 0,
-        "recentOutflowLitersPerHour": 0.11,
+        "recentOutflowLitersPerHour": 0.07,
         "hoursToEmpty": 0
       },
       "pressure": {
@@ -542,19 +542,19 @@
       "key": "royal",
       "name": "ROYAL",
       "address": "AV. ROQUE AGUILERA ESQ CALLE ANGEL SANDOVAL NRO 3897 ZONA VILLA FATIMA",
-      "liters": 2619,
+      "liters": 877,
       "visibleInSource": true,
       "fuelLevel": {
-        "score": 10.48,
+        "score": 3.51,
         "state": "CRITICO"
       },
       "flow": {
-        "deltaLiters": -881,
-        "litersPerHour": -1762,
-        "outflowLitersPerHour": 1762,
+        "deltaLiters": -1742,
+        "litersPerHour": -1742,
+        "outflowLitersPerHour": 1742,
         "inflowLitersPerHour": 0,
-        "recentOutflowLitersPerHour": 1385.84,
-        "hoursToEmpty": 1.89
+        "recentOutflowLitersPerHour": 1510.49,
+        "hoursToEmpty": 0.58
       },
       "pressure": {
         "score": 100,
@@ -584,7 +584,7 @@
         "litersPerHour": 0,
         "outflowLitersPerHour": 0,
         "inflowLitersPerHour": 0,
-        "recentOutflowLitersPerHour": 216.42,
+        "recentOutflowLitersPerHour": 140.68,
         "hoursToEmpty": 0
       },
       "pressure": {
