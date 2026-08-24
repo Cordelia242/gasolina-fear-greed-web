@@ -21,6 +21,12 @@ import type { Snapshot } from '../types';
 const fmt = new Intl.NumberFormat('es-BO');
 const AXIS_TICK = { fill: '#8f8a9c', fontSize: 9 };
 const compactTick = (v: number) => compactLiters(v).replace(' L', '');
+const BOLIVIA_DAY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/La_Paz',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
 
 type SeriesKey = 'index' | 'balance' | 'volumeIn' | 'volumeOut';
 const SERIES_KEYS: SeriesKey[] = ['index', 'balance', 'volumeIn', 'volumeOut'];
@@ -36,6 +42,26 @@ const RANGE_LABEL: Record<ChartRange, string> = { '7d': '7d', '30d': '30d', all:
 
 // Las barras de volumen ocupan solo esta fracción del alto del gráfico, pegadas abajo.
 const VOLUME_ZONE_FRACTION = 0.22;
+
+// El eje X del ComposedChart se mantiene categórico porque comparte líneas y barras.
+// Para marcar el inicio de cada día, usamos la primera muestra que ya pertenece al
+// nuevo día en America/La_Paz. Como el histórico se toma con alta frecuencia, la línea
+// queda visualmente pegada a las 00:00 sin convertir el eje a numérico.
+export function dayBoundaryTimes(times: string[]) {
+  const boundaries: string[] = [];
+  let previousDay: string | null = null;
+
+  for (const time of times) {
+    const date = new Date(time);
+    if (!Number.isFinite(date.getTime())) continue;
+
+    const day = BOLIVIA_DAY_FORMATTER.format(date);
+    if (previousDay !== null && day !== previousDay) boundaries.push(time);
+    previousDay = day;
+  }
+
+  return boundaries;
+}
 
 // El saldo/volumen del gráfico se recalcula sobre las estaciones de Santa Cruz
 // visibles (sumando su liters/flow, igual que hace el motor a nivel global),
@@ -116,6 +142,7 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
     }));
   }, [snapshots, latest]);
 
+  const daySeparators = useMemo(() => dayBoundaryTimes(chartData.map((d) => d.time)), [chartData]);
   const pressureScores = chartData.map((d) => d.score).filter((v): v is number => Number.isFinite(v));
   const mode = latest?.global?.pressure?.mode;
   const deltaLabel =
@@ -164,12 +191,21 @@ export function TrendCard({ latest }: { latest: Snapshot | null }) {
             <ComposedChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }} barCategoryGap="4%">
               <ReferenceArea yAxisId="score" y1={80} y2={100} fill={PRESSURE_STATE_COLORS.PRESION_EXTREMA} fillOpacity={0.15} />
               <ReferenceArea yAxisId="score" y1={0} y2={20} fill={PRESSURE_STATE_COLORS.SIN_PRESION} fillOpacity={0.15} />
+              {daySeparators.map((time) => (
+                <ReferenceLine
+                  key={time}
+                  x={time}
+                  stroke={ZONE_DIVIDER_COLOR}
+                  strokeDasharray="3 5"
+                  strokeOpacity={0.7}
+                />
+              ))}
               {[0, 20, 40, 60, 80, 100].map((y) => (
                 <ReferenceLine key={y} yAxisId="score" y={y} stroke={ZONE_DIVIDER_COLOR} strokeDasharray="1 5" strokeLinecap="round" />
               ))}
               <XAxis
                 dataKey="time"
-                tickFormatter={(t) => new Intl.DateTimeFormat('es-BO', { day: '2-digit', month: 'short' }).format(new Date(t))}
+                tickFormatter={(t) => new Intl.DateTimeFormat('es-BO', { day: '2-digit', month: 'short', timeZone: 'America/La_Paz' }).format(new Date(t))}
                 axisLine={false}
                 tickLine={false}
                 tick={AXIS_TICK}
@@ -282,8 +318,8 @@ function TrendTooltip({ active, payload, series }: { active?: boolean; payload?:
   return (
     <div className="chart-tooltip" style={{ display: 'block', position: 'static' }}>
       <div className="tooltip-date">
-        <strong>{new Intl.DateTimeFormat('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(dt)}</strong>
-        <span>{new Intl.DateTimeFormat('es-BO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(dt)}</span>
+        <strong>{new Intl.DateTimeFormat('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/La_Paz' }).format(dt)}</strong>
+        <span>{new Intl.DateTimeFormat('es-BO', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'America/La_Paz' }).format(dt)}</span>
       </div>
       <ul className="tooltip-rows">
         {series.index && Number.isFinite(d.score) && (
