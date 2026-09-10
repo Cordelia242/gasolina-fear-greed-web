@@ -28575,6 +28575,641 @@
           "inConfiguredCrisis": true
         }
       ]
+    },
+    {
+      "scrapedAt": "2026-09-10T02:30:09.002Z",
+      "sourceMeasuredAt": "2026-09-09T22:16:00",
+      "baseline": {
+        "minimumCleanDays": 30,
+        "windowDays": 90,
+        "retentionDays": 120,
+        "currentDateInConfiguredCrisis": true,
+        "configuredCrises": 1,
+        "stationsReady": 0,
+        "stationsTotal": 19
+      },
+      "global": {
+        "inventory": {
+          "score": 27.09,
+          "state": "ESCASEZ",
+          "totalLiters": 128672,
+          "stationsAvailable": 15,
+          "stationsTotal": 19
+        },
+        "pressure": {
+          "score": 69.09,
+          "state": "PRESION_ALTA",
+          "mode": "PROVISIONAL",
+          "stationsReady": 0,
+          "stationsTotal": 19,
+          "requiredStationsForComplete": 10,
+          "components": {
+            "demandPressure": null,
+            "runwayPressure": 68.07,
+            "inventoryTrendPressure": 100,
+            "inventoryTrendPctPerHour": -9.85,
+            "stationsWithoutFuel": 4,
+            "stationsWithoutFuelPressure": 21.05,
+            "flowBalancePressure": 100
+          }
+        },
+        "flow": {
+          "outflowLitersPerHour": 13324,
+          "inflowLitersPerHour": 0,
+          "netFlowLitersPerHour": -13324
+        }
+      },
+      "stations": [
+        {
+          "key": "alemana",
+          "name": "ALEMANA",
+          "address": "AV. ALEMANA, 2DO ANILLO",
+          "liters": 4152,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 16.61,
+            "state": "CRITICO"
+          },
+          "flow": {
+            "deltaLiters": -639,
+            "litersPerHour": -1278,
+            "outflowLitersPerHour": 1278,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 1274.14,
+            "hoursToEmpty": 3.26
+          },
+          "pressure": {
+            "score": 90.56,
+            "state": "PRESION_EXTREMA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 90.56
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "beni",
+          "name": "BENI",
+          "address": "AV. BENI, 2DO ANILLO",
+          "liters": 5441,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 21.76,
+            "state": "ESCASEZ"
+          },
+          "flow": {
+            "deltaLiters": -284,
+            "litersPerHour": -568,
+            "outflowLitersPerHour": 568,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 930,
+            "hoursToEmpty": 5.85
+          },
+          "pressure": {
+            "score": 75.75,
+            "state": "PRESION_ALTA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 75.75
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "berea",
+          "name": "BEREA",
+          "address": "DOBLE VIA LA GUARDIA KM 8",
+          "liters": 11699,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 46.8,
+            "state": "NORMAL"
+          },
+          "flow": {
+            "deltaLiters": -365,
+            "litersPerHour": -730,
+            "outflowLitersPerHour": 730,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 929.86,
+            "hoursToEmpty": 12.58
+          },
+          "pressure": {
+            "score": 43.79,
+            "state": "EQUILIBRIO",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 43.79
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "cabezas",
+          "name": "CABEZAS",
+          "address": "CARRETERA A CAMIRI LOCALIDAD CABEZAS - AV. ELOY ALPIRE",
+          "liters": 0,
+          "visibleInSource": false,
+          "fuelLevel": {
+            "score": 0,
+            "state": "CRITICO"
+          },
+          "flow": {
+            "deltaLiters": 0,
+            "litersPerHour": 0,
+            "outflowLitersPerHour": 0,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 213.85,
+            "hoursToEmpty": 0
+          },
+          "pressure": {
+            "score": 100,
+            "state": "PRESION_EXTREMA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 100
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "cedeno",
+          "name": "CEDENO",
+          "address": "CAMIRI - AV HUMBERTO SUAREZ ROCA, ZONA LA WILLAMS",
+          "liters": 10500,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 42,
+            "state": "NORMAL"
+          },
+          "flow": {
+            "deltaLiters": -1100,
+            "litersPerHour": -2200,
+            "outflowLitersPerHour": 2200,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 773.36,
+            "hoursToEmpty": 13.58
+          },
+          "pressure": {
+            "score": 41.71,
+            "state": "EQUILIBRIO",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 41.71
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "chaco",
+          "name": "CHACO",
+          "address": "AV. VIRGEN DE COTOCA, 2DO ANILLO",
+          "liters": 8850,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 35.4,
+            "state": "ESCASEZ"
+          },
+          "flow": {
+            "deltaLiters": -252,
+            "litersPerHour": -504,
+            "outflowLitersPerHour": 504,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 821.36,
+            "hoursToEmpty": 10.77
+          },
+          "pressure": {
+            "score": 51.13,
+            "state": "EQUILIBRIO",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 51.13
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "equipetrol",
+          "name": "EQUIPETROL",
+          "address": "V. EQUIPETROL, 4TO ANILLO AL FRENTE DE EX - BUFALO PARK",
+          "liters": 0,
+          "visibleInSource": false,
+          "fuelLevel": {
+            "score": 0,
+            "state": "CRITICO"
+          },
+          "flow": {
+            "deltaLiters": 0,
+            "litersPerHour": 0,
+            "outflowLitersPerHour": 0,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 850.42,
+            "hoursToEmpty": 0
+          },
+          "pressure": {
+            "score": 100,
+            "state": "PRESION_EXTREMA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 100
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "gasco",
+          "name": "GASCO",
+          "address": "AV. BANZER 3ER ANILLO",
+          "liters": 13924,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 55.7,
+            "state": "NORMAL"
+          },
+          "flow": {
+            "deltaLiters": -446,
+            "litersPerHour": -892,
+            "outflowLitersPerHour": 892,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 1106.99,
+            "hoursToEmpty": 12.58
+          },
+          "pressure": {
+            "score": 43.8,
+            "state": "EQUILIBRIO",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 43.8
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "la-teca",
+          "name": "LA TECA",
+          "address": "CARRETERA A COTOCA, ANTES DE LA TRANCA",
+          "liters": 11842,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 47.37,
+            "state": "NORMAL"
+          },
+          "flow": {
+            "deltaLiters": -318,
+            "litersPerHour": -636,
+            "outflowLitersPerHour": 636,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 823.36,
+            "hoursToEmpty": 14.38
+          },
+          "pressure": {
+            "score": 40.04,
+            "state": "EQUILIBRIO",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 40.04
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "lopez",
+          "name": "LOPEZ",
+          "address": "AV. BANZER, 7MO ANILLO",
+          "liters": 0,
+          "visibleInSource": false,
+          "fuelLevel": {
+            "score": 0,
+            "state": "CRITICO"
+          },
+          "flow": {
+            "deltaLiters": 0,
+            "litersPerHour": 0,
+            "outflowLitersPerHour": 0,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 220.23,
+            "hoursToEmpty": 0
+          },
+          "pressure": {
+            "score": 100,
+            "state": "PRESION_EXTREMA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 100
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "lucyfer",
+          "name": "LUCYFER",
+          "address": "ORURO - CIRCUNVALACION CALLE A NUM 80, ZONA NORESTE",
+          "liters": 4629,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 18.52,
+            "state": "CRITICO"
+          },
+          "flow": {
+            "deltaLiters": -154,
+            "litersPerHour": -308,
+            "outflowLitersPerHour": 308,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 706.43,
+            "hoursToEmpty": 6.55
+          },
+          "pressure": {
+            "score": 72.24,
+            "state": "PRESION_ALTA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 72.24
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "montecristo",
+          "name": "MONTECRISTO",
+          "address": "AV. VIRGEN DE COTOCA 8VO ANILLO",
+          "liters": 8051,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 32.2,
+            "state": "ESCASEZ"
+          },
+          "flow": {
+            "deltaLiters": -462,
+            "litersPerHour": -924,
+            "outflowLitersPerHour": 924,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 1027.03,
+            "hoursToEmpty": 7.84
+          },
+          "pressure": {
+            "score": 65.8,
+            "state": "PRESION_ALTA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 65.8
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "monteverde",
+          "name": "MONTEVERDE",
+          "address": "LOCALIDAD MONTERO, AV. CIRCUNVALACIÓN",
+          "liters": 469,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 1.88,
+            "state": "CRITICO"
+          },
+          "flow": {
+            "deltaLiters": -647,
+            "litersPerHour": -1294,
+            "outflowLitersPerHour": 1294,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 1256.14,
+            "hoursToEmpty": 0.37
+          },
+          "pressure": {
+            "score": 100,
+            "state": "PRESION_EXTREMA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 100
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "paragua",
+          "name": "PARAGUA",
+          "address": "AV. PARAGUA, 4TO ANILLO",
+          "liters": 12919,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 51.68,
+            "state": "NORMAL"
+          },
+          "flow": {
+            "deltaLiters": -264,
+            "litersPerHour": -528,
+            "outflowLitersPerHour": 528,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 959.5,
+            "hoursToEmpty": 13.46
+          },
+          "pressure": {
+            "score": 41.95,
+            "state": "EQUILIBRIO",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 41.95
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "parapeti",
+          "name": "PARAPETI",
+          "address": "CAMIRI CARRETERA YACUIBA-SANTA CRUZ KM1 ZONA BARRIO LA WILLAMS",
+          "liters": 12986,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 51.94,
+            "state": "NORMAL"
+          },
+          "flow": {
+            "deltaLiters": 0,
+            "litersPerHour": 0,
+            "outflowLitersPerHour": 0,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 108.46,
+            "hoursToEmpty": 119.73
+          },
+          "pressure": {
+            "score": 0,
+            "state": "SIN_PRESION",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 0
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "pirai",
+          "name": "PIRAI",
+          "address": "AV. ROCA Y CORONADO 3ER ANILLO",
+          "liters": 0,
+          "visibleInSource": false,
+          "fuelLevel": {
+            "score": 0,
+            "state": "CRITICO"
+          },
+          "flow": {
+            "deltaLiters": 0,
+            "litersPerHour": 0,
+            "outflowLitersPerHour": 0,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 668.29,
+            "hoursToEmpty": 0
+          },
+          "pressure": {
+            "score": 100,
+            "state": "PRESION_EXTREMA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 100
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "royal",
+          "name": "ROYAL",
+          "address": "AV. ROQUE AGUILERA ESQ CALLE ANGEL SANDOVAL NRO 3897 ZONA VILLA FATIMA",
+          "liters": 14831,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 59.32,
+            "state": "NORMAL"
+          },
+          "flow": {
+            "deltaLiters": -324,
+            "litersPerHour": -648,
+            "outflowLitersPerHour": 648,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 882.99,
+            "hoursToEmpty": 16.8
+          },
+          "pressure": {
+            "score": 35.01,
+            "state": "DEMANDA_BAJA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 35.01
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "sur-central",
+          "name": "SUR CENTRAL",
+          "address": "AV. SANTOS DUMONT, 2DO ANILLO",
+          "liters": 2966,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 11.86,
+            "state": "CRITICO"
+          },
+          "flow": {
+            "deltaLiters": -612,
+            "litersPerHour": -1224,
+            "outflowLitersPerHour": 1224,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 1479.84,
+            "hoursToEmpty": 2
+          },
+          "pressure": {
+            "score": 99.97,
+            "state": "PRESION_EXTREMA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 99.97
+          },
+          "inConfiguredCrisis": true
+        },
+        {
+          "key": "viru-viru",
+          "name": "VIRU VIRU",
+          "address": "KM11 AL NORTE A LADO DE PLAY LAND PARK",
+          "liters": 5413,
+          "visibleInSource": true,
+          "fuelLevel": {
+            "score": 21.65,
+            "state": "ESCASEZ"
+          },
+          "flow": {
+            "deltaLiters": -795,
+            "litersPerHour": -1590,
+            "outflowLitersPerHour": 1590,
+            "inflowLitersPerHour": 0,
+            "recentOutflowLitersPerHour": 1739.99,
+            "hoursToEmpty": 3.11
+          },
+          "pressure": {
+            "score": 91.67,
+            "state": "PRESION_EXTREMA",
+            "mode": "PROVISIONAL",
+            "baselineReady": false,
+            "baselineCleanDays": 0,
+            "demandScore": null,
+            "demandRatio": null,
+            "expectedOutflowLitersPerHour": null,
+            "runwayPressure": 91.67
+          },
+          "inConfiguredCrisis": true
+        }
+      ]
     }
   ]
 }
